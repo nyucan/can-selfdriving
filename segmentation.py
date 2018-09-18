@@ -22,7 +22,7 @@ def get_data(data_folder, image_h, image_w):
     right_lane_color = np.array([0, 0, 255])     # blue
 
     image_paths = glob(os.path.join(data_folder, 'image_2', '*.png'))
-    label_paths = glob(os.path.join(data_folder, 'gt_image', '*.png'))
+    label_paths = glob(os.path.join(data_folder, 'gt_image_2', '*.png'))
 
     # make sure the label and image are matched
     image_paths.sort()
@@ -60,11 +60,11 @@ def loss(y_true, y_pred):
 
 
 def build_layers(model):
-    model.add(keras.layers.Conv2D(input_shape=(48, 160, 3), filters=32, kernel_size=(3, 3), strides=(1, 1), padding='same', activation='relu'))
-    model.add(keras.layers.Conv2D(filters=32, kernel_size=(3, 3), padding='same', activation='relu'))
-    model.add(keras.layers.Conv2D(filters=64, kernel_size=(3, 3), padding='same', activation='relu'))
-    model.add(keras.layers.Conv2D(filters=128, kernel_size=(3, 3), padding='same', activation='relu'))
-    model.add(keras.layers.Conv2D(filters=3, kernel_size=(1, 1), padding='same', activation='relu'))
+    model.add(keras.layers.Conv2D(input_shape=(48, 160, 3), filters=32, kernel_size=(3, 3), strides=(1, 1), padding='same'))
+    model.add(keras.layers.Conv2D(filters=32, kernel_size=(3, 3), padding='same'))
+    model.add(keras.layers.Conv2D(filters=64, kernel_size=(3, 3), padding='same'))
+    model.add(keras.layers.Conv2D(filters=128, kernel_size=(3, 3), padding='same'))
+    model.add(keras.layers.Conv2D(filters=3, kernel_size=(1, 1), padding='same'))
     model.add(keras.layers.Softmax(axis=3))
 
 
