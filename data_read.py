@@ -54,7 +54,7 @@ def get_data(data_folder, image_h, image_w):
     right_lane_color = np.array([0, 0, 255])     # blue
 
     image_paths = glob(os.path.join(data_folder, 'image_2', '*.png'))
-    label_paths = glob(os.path.join(data_folder, 'gt_image', '*.png'))
+    label_paths = glob(os.path.join(data_folder, 'gt_image_2', '*.png'))
 
     # make sure the label and image are matched
     image_paths.sort()
@@ -90,16 +90,3 @@ def get_test_data(data_folder, image_h, image_w):
         images.append(image)
         image_names.append(os.path.basename(image_paths[image_file_id]))
     return np.array(images), np.array(image_names)
-
-
-# TODO
-def preprocess():
-    pass
-
-
-def unit_test():
-    pass
-
-
-if __name__ == '__main__':
-    unit_test()
