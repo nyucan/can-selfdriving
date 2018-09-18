@@ -5,6 +5,10 @@ import os.path
 from os.path import join, expanduser
 from glob import glob
 
+import scipy.misc
+import numpy as np
+
+
 def gen_batch_function(data_folder, image_h, image_w):
     """
     Generate function to create batches of training data
@@ -77,6 +81,18 @@ def get_data(data_folder, image_h, image_w):
     return np.array(images), np.array(gt_images)
 
 
+def get_test_data(data_folder, image_h, image_w):
+    image_paths = glob(os.path.join(data_folder, '*.png'))
+    images = []
+    image_names = []
+    for image_file_id in range(0, len(image_paths)):
+        image = scipy.misc.imread(image_paths[image_file_id], mode='RGB')
+        images.append(image)
+        image_names.append(os.path.basename(image_paths[image_file_id]))
+    return np.array(images), np.array(image_names)
+
+
+# TODO
 def preprocess():
     pass
 

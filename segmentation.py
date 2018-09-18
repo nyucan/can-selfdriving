@@ -4,6 +4,7 @@ from __future__ import absolute_import, division, print_function
 import os.path
 from os.path import join, expanduser
 from glob import glob
+import time
 
 import numpy as np
 import scipy.misc
@@ -11,9 +12,14 @@ import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import backend as K
 
+import data
+
 
 smooth = 1
 num_classes = 3
+training_epochs = 7
+batch_size = 10
+image_h, image_w = (48, 160)
 
 
 def get_data(data_folder, image_h, image_w):
@@ -70,27 +76,42 @@ def build_layers(model):
 
 def train(model, data, labels):
     model.compile(optimizer=tf.train.AdamOptimizer(0.001), loss=loss, metrics=['accuracy'])
-    model.fit(data, labels, epochs=3, batch_size=10)
+    model.fit(data, labels, epochs=training_epochs, batch_size=batch_size)
 
 
-def evaluate(model, val_data, val_label):
-    model.evaluate(val_data, val_label, batch_size=32)
+# def evaluate(model, val_data, val_label):
+#     model.evaluate(val_data, val_label, batch_size=batch_size)
+
+
+def load():
+    cur_model_path = os.path.join('.', 'models', 'curmodel.model')
+    model = tf.keras.models.load_model(cur_model_path, custom_objects=None, compile=True)
+    return model
+
+
+def test():
+    testing_data_dir = join('.', 'data', 'testing', 'image_2')
+    test_data, test_names = data.get_test_data(testing_data_dir, image_h, image_w)
+    model = load()
+    result = model.predict(test_data, batch_size=1)
+    output(result, True, test_names)
 
 
 def run():
     image_h, image_w = (48, 160)
     data_dir = join('.', 'data')
     training_data_dir = join(data_dir, 'training')
-
     data, labels = get_data(training_data_dir, image_h, image_w)
-    model = keras.Sequential()
 
-    build_layers(model)
-
+    # model = keras.Sequential()
+    # build_layers(model)
+    model = load()
     train(model, data, labels)
+    tf.keras.models.save_model(model, os.path.join('.', 'models', 'test.model'), overwrite=True, include_optimizer=True)
+
     # evaluate(model, data, labels)
     result = model.predict(data, batch_size=1)
-    output(result)
+    output(result, False)
 
 
 def transfer_to_rgb(bin_img):
@@ -107,12 +128,16 @@ def transfer_to_rgb(bin_img):
     return rgb_img
 
 
-def output(result):
+def output(result, is_test, result_name=None):
     for i in range(len(result)):
         rgb_img = transfer_to_rgb(result[i])
-        save_path = os.path.join('.', 'data', 'output', str(i+1) + '.png')
+        if is_test:
+            save_path = os.path.join('.', 'data', 'output-test', result_name[i])
+        else:
+            save_path = os.path.join('.', 'data', 'output', str(i+1) + '.png')
         scipy.misc.imsave(save_path, rgb_img)
 
 
 if __name__ == '__main__':
     run()
+    # test()
