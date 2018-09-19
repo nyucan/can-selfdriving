@@ -9,7 +9,7 @@ import scipy.misc
 import numpy as np
 
 
-def gen_batch_function(data_folder, image_h, image_w):
+def gen_batch_function(data_folder, label_folder, image_h, image_w):
     """
     Generate function to create batches of training data
     :param data_folder: Path to folder that contains all the datasets
@@ -21,8 +21,8 @@ def gen_batch_function(data_folder, image_h, image_w):
     right_lane_color = np.array([0, 0, 255])     # blue
 
     def get_batches_fn(batch_size):
-        image_paths = glob(os.path.join(data_folder, 'image_2', '*.png'))
-        label_paths = glob(os.path.join(data_folder, 'gt_image_2', '*.png'))
+        image_paths = glob(os.path.join(data_folder, '*.png'))
+        label_paths = glob(os.path.join(label_folder, '*.png'))
 
         # make sure the label and image are matched
         image_paths.sort()
@@ -48,13 +48,13 @@ def gen_batch_function(data_folder, image_h, image_w):
     return get_batches_fn
 
 
-def get_data(data_folder, image_h, image_w):
+def get_data(data_folder, label_folder, image_h, image_w):
     background_color = np.array([255, 255, 255]) # white
     left_lane_color = np.array([255, 0, 0])      # red
     right_lane_color = np.array([0, 0, 255])     # blue
 
-    image_paths = glob(os.path.join(data_folder, 'image_2', '*.png'))
-    label_paths = glob(os.path.join(data_folder, 'gt_image_2', '*.png'))
+    image_paths = glob(os.path.join(data_folder, '*.png'))
+    label_paths = glob(os.path.join(label_folder, '*.png'))
 
     # make sure the label and image are matched
     image_paths.sort()

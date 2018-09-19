@@ -34,7 +34,7 @@ def loss(y_true, y_pred):
 
 
 def build_layers(model):
-    model.add(keras.layers.Conv2D(input_shape=(48, 160, 3), filters=32, kernel_size=(3, 3), strides=(1, 1), padding='same'))
+    model.add(keras.layers.Conv2D(input_shape=(48, 160, 3), filters=32, kernel_size=(3, 3), padding='same'))
     model.add(keras.layers.Conv2D(filters=32, kernel_size=(3, 3), padding='same'))
     model.add(keras.layers.Conv2D(filters=64, kernel_size=(3, 3), padding='same'))
     model.add(keras.layers.Conv2D(filters=128, kernel_size=(3, 3), padding='same'))
@@ -55,7 +55,7 @@ def load():
 
 def test():
     testing_data_dir = join('.', 'data', 'testing', 'image_2')
-    test_data, test_names = data.get_test_data(testing_data_dir, image_h, image_w)
+    test_data, test_names = data_read.get_test_data(testing_data_dir, image_h, image_w)
     model = load()
     result = model.predict(test_data, batch_size=1)
     output(result, True, test_names)
@@ -63,19 +63,22 @@ def test():
 
 def run(from_model=None):
     image_h, image_w = (48, 160)
-    data_dir = join('.', 'data')
-    training_data_dir = join(data_dir, 'training')
-    data, labels = data_read.get_data(training_data_dir, image_h, image_w)
+    training_data_dir = join('.', 'data', 'training')
+    data_folder = join(training_data_dir, 'image_2')
+    label_folder = join(training_data_dir, 'gt_image_2')
+
+    # read dataset into memory
+    data, labels = data_read.get_data(data_folder, label_folder, image_h, image_w)
 
     if from_model == None:
         model = keras.Sequential()
-        print('training from sketch')
+        print('info: Train FCNN from sketch')
         build_layers(model)
     else:
         model = from_model
 
     train(model, data, labels)
-    keras.models.save_model(model, os.path.join('.', 'models', 'test.model'), overwrite=True, include_optimizer=True)
+    keras.models.save_model(model, os.path.join('.', 'models', 'test'), overwrite=True, include_optimizer=True)
 
     result = model.predict(data, batch_size=1)
     output(result, False)
