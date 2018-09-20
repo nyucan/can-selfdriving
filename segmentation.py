@@ -34,7 +34,7 @@ def loss(y_true, y_pred):
 
 
 def build_layers(model):
-    model.add(keras.layers.Conv2D(input_shape=(48, 160, 3), filters=32, kernel_size=(3, 3), padding='same'))
+    model.add(keras.layers.Conv2D(input_shape=(48, 160, 3), filters=16, kernel_size=(3, 3), padding='same'))
     model.add(keras.layers.Conv2D(filters=32, kernel_size=(3, 3), padding='same'))
     model.add(keras.layers.Conv2D(filters=64, kernel_size=(3, 3), padding='same'))
     model.add(keras.layers.Conv2D(filters=128, kernel_size=(3, 3), padding='same'))
@@ -47,16 +47,16 @@ def train(model, data, labels):
     model.fit(data, labels, epochs=training_epochs, batch_size=batch_size)
 
 
-def load():
-    cur_model_path = os.path.join('.', 'models', 'curmodel.model')
-    model = keras.models.load_model(cur_model_path, custom_objects=None, compile=True)
+def load(model_path):
+    model = keras.models.load_model(model_path, custom_objects=None, compile=True)
     return model
 
 
 def test():
     testing_data_dir = join('.', 'data', 'testing', 'image_2')
     test_data, test_names = data_read.get_test_data(testing_data_dir, image_h, image_w)
-    model = load()
+    model_path = os.path.join('.', 'models', 'test')
+    model = load(model_path)
     result = model.predict(test_data, batch_size=1)
     output(result, True, test_names)
 
