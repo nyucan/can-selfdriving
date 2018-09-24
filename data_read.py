@@ -12,16 +12,16 @@ import util
 
 def get_data(data_folder, label_folder, image_h, image_w):
     background_color = np.array([255, 255, 255]) # white
-    left_lane_color = np.array([255, 0, 0])      # red
+    left_lane_color = np.array([0, 0, 255])      # red
 
     image_paths = glob(os.path.join(data_folder, '*.png'))
     label_paths = glob(os.path.join(label_folder, '*.png'))
 
     # make sure the label and image are matched
-    image_paths.sort(key=util.filename_key)
-    label_paths.sort(key=util.filename_key)
-    # image_paths.sort()
-    # label_paths.sort()
+    # image_paths.sort(key=util.filename_key)
+    # label_paths.sort(key=util.filename_key)
+    image_paths.sort()
+    label_paths.sort()
 
     images = []    # data
     gt_images = [] # labels
@@ -47,7 +47,7 @@ def get_test_data(data_folder, image_h, image_w):
     images = []
     image_names = []
     for image_file_id in range(0, len(image_paths)):
-        image = imageio.imread(image_paths[image_file_id], pilmode='RGB')
+        image = cv2.imread(image_paths[image_file_id])
         images.append(image)
         image_names.append(os.path.basename(image_paths[image_file_id]))
     return np.array(images), np.array(image_names)

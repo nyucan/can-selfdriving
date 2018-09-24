@@ -19,7 +19,7 @@ import util
 image_h, image_w = (48, 160)
 num_classes = 2
 training_epochs = 3
-batch_size = 20
+batch_size = 10
 learning_rate = 0.0005
 
 
@@ -38,9 +38,7 @@ def build_layers(model):
     model.add(keras.layers.Conv2D(input_shape=(48, 160, 3), filters=16, kernel_size=(3, 3), padding='same'))
     model.add(keras.layers.Conv2D(filters=32, kernel_size=(3, 3), padding='same'))
     model.add(keras.layers.Conv2D(filters=64, kernel_size=(3, 3), padding='same'))
-    model.add(keras.layers.Dropout(0.2))
     model.add(keras.layers.Conv2D(filters=128, kernel_size=(3, 3), padding='same'))
-    model.add(keras.layers.Conv2D(filters=128, kernel_size=(1, 1), padding='same'))
     model.add(keras.layers.Conv2D(filters=2, kernel_size=(1, 1), padding='same'))
     model.add(keras.layers.Softmax(axis=3))
 
