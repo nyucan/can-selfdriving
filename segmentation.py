@@ -7,20 +7,20 @@ from glob import glob
 import time
 
 import numpy as np
-import scipy.misc
+import cv2
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import backend as K
 
 import data_read
-import data_process
+import util
 
 
-smooth = 1
-num_classes = 3
-training_epochs = 7
-batch_size = 10
 image_h, image_w = (48, 160)
+num_classes = 2
+training_epochs = 3
+batch_size = 20
+learning_rate = 0.0005
 
 
 def loss(y_true, y_pred):
@@ -30,6 +30,7 @@ def loss(y_true, y_pred):
 
     # Define loss
     cross_entropy_loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(labels=labels_flat, logits=logits_flat))
+    # cross_entropy_loss = tf.reduce_mean(tf.nn.weighted_cross_entropy_with_logits(targets=labels_flat, logits=logits_flat, pos_weight=0.0001))
     return cross_entropy_loss
 
 
@@ -37,14 +38,20 @@ def build_layers(model):
     model.add(keras.layers.Conv2D(input_shape=(48, 160, 3), filters=16, kernel_size=(3, 3), padding='same'))
     model.add(keras.layers.Conv2D(filters=32, kernel_size=(3, 3), padding='same'))
     model.add(keras.layers.Conv2D(filters=64, kernel_size=(3, 3), padding='same'))
+    model.add(keras.layers.Dropout(0.2))
     model.add(keras.layers.Conv2D(filters=128, kernel_size=(3, 3), padding='same'))
-    model.add(keras.layers.Conv2D(filters=3, kernel_size=(1, 1), padding='same'))
+    model.add(keras.layers.Conv2D(filters=128, kernel_size=(1, 1), padding='same'))
+    model.add(keras.layers.Conv2D(filters=2, kernel_size=(1, 1), padding='same'))
     model.add(keras.layers.Softmax(axis=3))
 
 
 def train(model, data, labels):
-    model.compile(optimizer=tf.train.AdamOptimizer(0.001), loss=loss, metrics=['accuracy'])
-    model.fit(data, labels, epochs=training_epochs, batch_size=batch_size)
+    callbacks = [
+        # Write TensorBoard logs to `./logs` directory
+        keras.callbacks.TensorBoard(log_dir='./logs')
+    ]
+    model.compile(optimizer=tf.train.AdamOptimizer(learning_rate), loss=loss, metrics=['accuracy'])
+    model.fit(data, labels, epochs=training_epochs, callbacks=callbacks, batch_size=batch_size)
 
 
 def load(model_path):
@@ -64,36 +71,35 @@ def test():
 def run(from_model=None):
     image_h, image_w = (48, 160)
     training_data_dir = join('.', 'data', 'training')
-    data_folder = join(training_data_dir, 'image_2')
-    label_folder = join(training_data_dir, 'gt_image_2')
+    data_folder = join(training_data_dir, 'aug-data')
+    label_folder = join(training_data_dir, 'aug-label')
 
     # read dataset into memory
     data, labels = data_read.get_data(data_folder, label_folder, image_h, image_w)
 
     if from_model == None:
-        model = keras.Sequential()
         print('info: Train FCNN from sketch')
+        model = keras.Sequential()
         build_layers(model)
     else:
         model = from_model
 
     train(model, data, labels)
     keras.models.save_model(model, os.path.join('.', 'models', 'test'), overwrite=True, include_optimizer=True)
-
-    result = model.predict(data, batch_size=1)
-    output(result, False)
+    # result = model.predict(data, batch_size=1)
+    # output(result, False)
 
 
 def output(result, is_test, result_name=None):
     for i in range(len(result)):
-        rgb_img = data_process.transfer_to_rgb(result[i])
+        rgb_img = util.transfer_to_rgb(result[i])
         if is_test:
             save_path = os.path.join('.', 'data', 'output-test', result_name[i])
         else:
             save_path = os.path.join('.', 'data', 'output', str(i+1) + '.png')
-        scipy.misc.imsave(save_path, rgb_img)
+        cv2.imwrite(save_path, rgb_img)
 
 
 if __name__ == '__main__':
     run()
-    # test()
+    test()
