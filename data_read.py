@@ -13,7 +13,7 @@ import util
 
 def get_data(data_folder, label_folder, image_h, image_w):
     background_color = np.array([255, 255, 255]) # white
-    left_lane_color = np.array([0, 0, 255])      # red
+    lane_color = np.array([0, 0, 255])           # red
 
     image_paths = glob(os.path.join(data_folder, '*.png'))
     label_paths = glob(os.path.join(label_folder, '*.png'))
@@ -35,7 +35,7 @@ def get_data(data_folder, label_folder, image_h, image_w):
         gt_image = cv2.imread(gt_image_file, 3)
 
         gt_bg = np.all(gt_image == background_color, axis=2).reshape(image_h, image_w, 1)
-        gt_l = np.all(gt_image == left_lane_color, axis=2).reshape(image_h, image_w, 1)
+        gt_l = np.all(gt_image == lane_color, axis=2).reshape(image_h, image_w, 1)
         gt_image = np.concatenate((gt_bg, gt_l), axis=2)
 
         images.append(image)
