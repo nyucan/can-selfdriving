@@ -7,6 +7,7 @@ from glob import glob
 
 import cv2
 import numpy as np
+import tensorflow as tf
 
 import util
 
@@ -51,3 +52,7 @@ def get_test_data(data_folder, image_h, image_w):
         images.append(image)
         image_names.append(os.path.basename(image_paths[image_file_id]))
     return np.array(images), np.array(image_names)
+
+
+def get_dataset(data_folder, label_folder, image_h, image_w):
+    pass

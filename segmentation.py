@@ -20,7 +20,7 @@ image_h, image_w = (48, 160)
 num_classes = 2
 training_epochs = 3
 batch_size = 10
-learning_rate = 0.0005
+learning_rate = 0.00005
 
 
 def loss(y_true, y_pred):
@@ -29,8 +29,8 @@ def loss(y_true, y_pred):
     labels_flat = tf.reshape(y_true, (-1, num_classes))
 
     # Define loss
-    cross_entropy_loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(labels=labels_flat, logits=logits_flat))
-    # cross_entropy_loss = tf.reduce_mean(tf.nn.weighted_cross_entropy_with_logits(targets=labels_flat, logits=logits_flat, pos_weight=0.0001))
+    # cross_entropy_loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(labels=labels_flat, logits=logits_flat))
+    cross_entropy_loss = tf.reduce_mean(tf.nn.weighted_cross_entropy_with_logits(targets=labels_flat, logits=logits_flat, pos_weight=5))
     return cross_entropy_loss
 
 
@@ -48,8 +48,13 @@ def train(model, data, labels):
         # Write TensorBoard logs to `./logs` directory
         keras.callbacks.TensorBoard(log_dir='./logs')
     ]
-    model.compile(optimizer=tf.train.AdamOptimizer(learning_rate), loss=loss, metrics=['accuracy'])
+    model.compile(optimizer=tf.train.AdamOptimizer(learning_rate), loss=loss, metrics=['mae', 'acc'])
     model.fit(data, labels, epochs=training_epochs, callbacks=callbacks, batch_size=batch_size)
+
+
+def save_checkpoint(path, model):
+    t = time.time()
+    keras.models.save_model(model, os.path.join(path, str(t)), overwrite=True, include_optimizer=True)
 
 
 def load(model_path):
@@ -83,7 +88,7 @@ def run(from_model=None):
         model = from_model
 
     train(model, data, labels)
-    keras.models.save_model(model, os.path.join('.', 'models', 'test'), overwrite=True, include_optimizer=True)
+    save_checkpoint(join('.', 'models'), model)
     # result = model.predict(data, batch_size=1)
     # output(result, False)
 
@@ -92,12 +97,13 @@ def output(result, is_test, result_name=None):
     for i in range(len(result)):
         rgb_img = util.transfer_to_rgb(result[i])
         if is_test:
-            save_path = os.path.join('.', 'data', 'output-test', result_name[i])
+            save_path = join('.', 'data', 'output-test', result_name[i])
         else:
-            save_path = os.path.join('.', 'data', 'output', str(i+1) + '.png')
+            save_path = join('.', 'data', 'output', str(i+1) + '.png')
         cv2.imwrite(save_path, rgb_img)
 
 
 if __name__ == '__main__':
-    run()
+    pre_model = load('./models/1537812102.19')
+    # run(pre_model)
     test()

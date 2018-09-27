@@ -39,11 +39,13 @@ def transfer_to_rgb(bin_img):
     Transfer a classification image with one-hot pixels into a RGB image.
     """
     h, w, c = bin_img.shape
-    rgb_img = np.zeros((h, w, 3))
+    # rgb_img = np.zeros((h, w, 3))
+    rgb_img = np.uint8(np.ones((h, w, 3))) * 255
     for i in range(h):
         for j in range(w):
             if np.all(bin_img[i][j] == [1, 0]):
                 rgb_img[i][j] = [255, 255, 255]
             elif np.all(bin_img[i][j] == [0, 1]):
-                rgb_img[i][j] = [0, 0, 255]
+                # rgb_img[i][j] = [0, 0, 255]
+                rgb_img[i][j] = [0, 0, 0]
     return rgb_img
