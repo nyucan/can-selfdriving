@@ -14,6 +14,15 @@ def filename_key(x):
     return res
 
 
+def get_an_image_from(path):
+    img = cv2.imread(path)
+    return img
+
+
+def put_an_image_to(path, image):
+    cv2.imwrite(path, image)
+
+
 # read images
 def get_images_from(path):
     files_list = glob(join(path, '*.png'))

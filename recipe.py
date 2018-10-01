@@ -58,6 +58,12 @@ def test_model(model_name):
     util.put_images_to(testing_pred_dir, rgb_img_list, test_names)
 
 
+# predict the lane of an image
+def make_prediction_with(model, target_image, output_dir):
+    nn = Fcn(None, None, (image_h, image_w), None, None)
+    nn.load_model(join(model_path, model_name))
+
+
 if __name__ == '__main__':
     # nn = train_nn_from_sketch()
     # nn = train_nn_from_model('1538068266.3')
