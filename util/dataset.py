@@ -9,7 +9,7 @@ import cv2
 import numpy as np
 import tensorflow as tf
 
-import util
+from util import util
 
 def get_data(data_folder, label_folder, image_h, image_w):
     background_color = np.array([255, 255, 255]) # white
@@ -19,10 +19,10 @@ def get_data(data_folder, label_folder, image_h, image_w):
     label_paths = glob(os.path.join(label_folder, '*.png'))
 
     # make sure the label and image are matched
-    # image_paths.sort(key=util.filename_key)
-    # label_paths.sort(key=util.filename_key)
-    image_paths.sort()
-    label_paths.sort()
+    image_paths.sort(key=util.filename_key)
+    label_paths.sort(key=util.filename_key)
+    # image_paths.sort()
+    # label_paths.sort()
 
     images = []    # data
     gt_images = [] # labels
@@ -45,6 +45,7 @@ def get_data(data_folder, label_folder, image_h, image_w):
 
 def get_test_data(data_folder, image_h, image_w):
     image_paths = glob(os.path.join(data_folder, '*.png'))
+    image_paths.sort(key=util.filename_key)
     images = []
     image_names = []
     for image_file_id in range(0, len(image_paths)):
@@ -54,5 +55,7 @@ def get_test_data(data_folder, image_h, image_w):
     return np.array(images), np.array(image_names)
 
 
+# TODO
+# get tensorflow dataset (for large dataset that cannot be directly read into the memory)
 def get_dataset(data_folder, label_folder, image_h, image_w):
     pass
