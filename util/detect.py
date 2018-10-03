@@ -7,6 +7,8 @@ import os
 from os.path import join
 from glob import glob
 from detect_peaks import detect_peaks
+from debuger import breakpoint
+import util
 
 
 lane_color = np.uint8([[[0,0,0]]])
@@ -74,17 +76,31 @@ def fit_image(image):
 
     pts_left = np.array([y_left_fitted, x_fitted], np.int32).transpose()
     pts_right = np.array([y_right_fitted, x_fitted], np.int32).transpose()
-    cv2.polylines(image, [pts_left], False, (0,255,255), 1)
-    cv2.polylines(image, [pts_right], False, (0,255,255), 1)
-    return cv2.resize(image, (0,0), fx=4, fy=4)
+    cv2.polylines(image, [pts_left], False, (0, 255, 255), 1)
+    cv2.polylines(image, [pts_right], False, (0, 255, 255), 1)
+    # return cv2.resize(image, (0,0), fx=4, fy=4)
+    # return image
+    return image, pts_left, pts_right
+
+
+def plot_lines(image, pts_left, pts_right):
+    cv2.polylines(image, [pts_left], False, (0, 255, 255), 1)
+    cv2.polylines(image, [pts_right], False, (0, 255, 255), 1)
+    return cv2.resize(image, (0,0), fx=6, fy=6)
+    # return image
+
+
+def make_decision():
+    pass
 
 
 def mark_images_from(ori_path, dest_path):
     image_paths = glob(os.path.join(ori_path, '*.png'))
-    # image_paths.sort(util.filename_key)
+    image_paths.sort(key=util.filename_key)
     for i in range(len(image_paths)):
         image = cv2.imread(image_paths[i])
-        marked_image = fit_image(image)
+        image, pts_left, pts_right = fit_image(image)
+        marked_image = plot_lines(image, pts_left, pts_right)
         cv2.imwrite(join(dest_path, str(i + 1) + '.png'), marked_image)
 
 

@@ -16,12 +16,13 @@ def fit_lane():
 
 
 def main():
-    ## take picture with camera
-    ## crop image
+    ## TODO take picture with camera
+    ## TODO crop image
     ## generate the predicted image with trained model
+    test_model('1538068266.3')
     ## fit the lane with curve
     fit_lane()
-    ## decide how to move
+    ## TODO decide how to move
 
 
 if __name__ == '__main__':
