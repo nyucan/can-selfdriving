@@ -38,9 +38,14 @@ def find_lane_centers(laneIMG_binary):
     vector_sum_of_lane_marks = np.sum(laneIMG_binary, axis=0)
     peaks = detect_peaks(vector_sum_of_lane_marks, mpd=peaks_distance)
     # we only use the first two peaks as the starting points of the lanes
-    peaks = peaks[:2]
-    lane_center_left = peaks[0]
-    lane_center_right = peaks[1]
+    if (len(peaks) >= 2):
+        peaks = peaks[:2]
+        lane_center_left = peaks[0]
+        lane_center_right = peaks[1]
+    else:
+        # set center manually
+        lane_center_left = 60
+        lane_center_right = 110
     return lane_center_left, lane_center_right
 
 
@@ -64,23 +69,25 @@ def fit_image(image):
 
     lane_center_left, lane_center_right = find_lane_centers(laneIMG_binary)
 
-    x_left, y_left = find_pixels_of_lane(laneIMG_binary, lane_center_left, window_size, img_width)
-    w_left = np.polyfit(x_left, y_left, poly_order)
-    poly_fit_left = np.poly1d(w_left)
-    y_left_fitted = poly_fit_left(x_fitted)
+    try:
+        x_left, y_left = find_pixels_of_lane(laneIMG_binary, lane_center_left, window_size, img_width)
+        w_left = np.polyfit(x_left, y_left, poly_order)
+        poly_fit_left = np.poly1d(w_left)
+        y_left_fitted = poly_fit_left(x_fitted)
 
-    x_right, y_right = find_pixels_of_lane(laneIMG_binary, lane_center_right, window_size, img_width)
-    w_right = np.polyfit(x_right, y_right, poly_order)
-    poly_fit_right = np.poly1d(w_right)
-    y_right_fitted = poly_fit_right(x_fitted)
+        x_right, y_right = find_pixels_of_lane(laneIMG_binary, lane_center_right, window_size, img_width)
+        w_right = np.polyfit(x_right, y_right, poly_order)
+        poly_fit_right = np.poly1d(w_right)
+        y_right_fitted = poly_fit_right(x_fitted)
 
-    pts_left = np.array([y_left_fitted, x_fitted], np.int32).transpose()
-    pts_right = np.array([y_right_fitted, x_fitted], np.int32).transpose()
-    cv2.polylines(image, [pts_left], False, (0, 255, 255), 1)
-    cv2.polylines(image, [pts_right], False, (0, 255, 255), 1)
-    # return cv2.resize(image, (0,0), fx=4, fy=4)
-    # return image
-    return image, pts_left, pts_right
+        pts_left = np.array([y_left_fitted, x_fitted], np.int32).transpose()
+        pts_right = np.array([y_right_fitted, x_fitted], np.int32).transpose()
+        cv2.polylines(image, [pts_left], False, (0, 255, 255), 1)
+        cv2.polylines(image, [pts_right], False, (0, 255, 255), 1)
+    except TypeError as err:
+        print('points not enough')
+    finally:
+        return image, pts_left, pts_right
 
 
 def plot_lines(image, pts_left, pts_right):

@@ -66,5 +66,5 @@ def make_prediction_with(model, target_image, output_dir):
 
 if __name__ == '__main__':
     # nn = train_nn_from_sketch()
-    # nn = train_nn_from_model('1538068266.3')
-    test_model('1538068266.3')
+    nn = train_nn_from_model('1538586986.23')
+    # test_model('1538068266.3')

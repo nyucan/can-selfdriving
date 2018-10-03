@@ -37,9 +37,12 @@ def get_images_from(path):
 
 
 # write images
-def put_images_to(path, images, image_names):
+def put_images_to(path, images, image_names=None, start_from=1):
     for i in range(len(images)):
-        cv2.imwrite(join(path, str(image_names[i])), images[i])
+        if type(image_names) != type(None):
+            cv2.imwrite(join(path, str(image_names[i])), images[i])
+        else:
+            cv2.imwrite(join(path, str(i + start_from) + '.png'), images[i])
 
 
 # translate one-hot vectors
