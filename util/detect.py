@@ -80,12 +80,16 @@ def fit_image(image):
         poly_fit_right = np.poly1d(w_right)
         y_right_fitted = poly_fit_right(x_fitted)
 
-        pts_left = np.array([y_left_fitted, x_fitted], np.int32).transpose()
-        pts_right = np.array([y_right_fitted, x_fitted], np.int32).transpose()
+        # use uint8 to save space
+        pts_left = np.array([y_left_fitted, x_fitted], np.uint8).transpose()
+        pts_right = np.array([y_right_fitted, x_fitted], np.uint8).transpose()
+        # pts_left = np.array([y_left_fitted, x_fitted], np.uint32).transpose()
+        # pts_right = np.array([y_right_fitted, x_fitted], np.uint32).transpose()
         cv2.polylines(image, [pts_left], False, (0, 255, 255), 1)
         cv2.polylines(image, [pts_right], False, (0, 255, 255), 1)
     except TypeError as err:
         print('points not enough')
+        return image, None, None
     finally:
         return image, pts_left, pts_right
 

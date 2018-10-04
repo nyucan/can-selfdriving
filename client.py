@@ -4,6 +4,7 @@ import struct
 import time
 import picamera
 import threading
+import pickle
 
 class SplitFrames(object):
     def __init__(self, connection):
@@ -36,8 +37,7 @@ def send_img(cs):
             camera.start_recording(output, format='mjpeg')
             camera.wait_recording(30)
             camera.stop_recording()
-            # Write the terminating 0-length to the connection to let the
-            # server know we're done
+            # Write the terminating 0-length to the connection to let the server know we're done
             connection.write(struct.pack('<L', 0))
     finally:
         connection.close()
@@ -49,13 +49,17 @@ def send_img(cs):
 def recv_data(s):
     # wait for result from the server
     while (True):
-        data = s.recv(1024)
-        dosomething(data)
+        buffer = s.recv(1024)
+        dosomething(buffer)
 
 
-def dosomething(data):
+def dosomething(buffer):
     # placeholder
-    print('Received', repr(data))
+    data = pickle.loads(buffer)
+    image_id = data[0]
+    pts_left, pts_right = data[1][0], data[1][1]
+    # TODO
+    # print('Received', repr(data))
 
 
 if __name__ == '__main__':
