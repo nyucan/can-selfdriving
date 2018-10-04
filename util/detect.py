@@ -80,11 +80,8 @@ def fit_image(image):
         poly_fit_right = np.poly1d(w_right)
         y_right_fitted = poly_fit_right(x_fitted)
 
-        # use uint8 to save space
-        pts_left = np.array([y_left_fitted, x_fitted], np.uint8).transpose()
-        pts_right = np.array([y_right_fitted, x_fitted], np.uint8).transpose()
-        # pts_left = np.array([y_left_fitted, x_fitted], np.uint32).transpose()
-        # pts_right = np.array([y_right_fitted, x_fitted], np.uint32).transpose()
+        pts_left = np.array([y_left_fitted, x_fitted], np.int32).transpose()
+        pts_right = np.array([y_right_fitted, x_fitted], np.int32).transpose()
         cv2.polylines(image, [pts_left], False, (0, 255, 255), 1)
         cv2.polylines(image, [pts_right], False, (0, 255, 255), 1)
     except TypeError as err:
@@ -99,10 +96,6 @@ def plot_lines(image, pts_left, pts_right):
     cv2.polylines(image, [pts_right], False, (0, 255, 255), 1)
     return cv2.resize(image, (0,0), fx=6, fy=6)
     # return image
-
-
-def make_decision():
-    pass
 
 
 def mark_images_from(ori_path, dest_path):

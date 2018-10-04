@@ -10,6 +10,7 @@ import recipe
 
 class Server(object):
     def __init__(self):
+        self.predictor = recipe.Predictior('1538586986.23')
         self.server = socket.socket()
         self.server.bind(('0.0.0.0', 8888))
         self.server.listen(0)
@@ -30,11 +31,13 @@ class Server(object):
                 image_stream.write(self.connection.read(image_len))
                 # Rewind the stream, open it as an image with PIL and do some processing on it
                 image_stream.seek(0)
-                image = Image.open(image_stream)
+                # image = Image.open(image_stream)
+                image = Image.open(image_stream).convert('RGB')
+                open_cv_image = np.array(image)
 
                 # image.save('./comm/image-' + str(image_id) + '.png')
                 # print('transmited image' + str(image_id))
-                result = self.predict_and_fit(image)
+                result = self.predict_and_fit(open_cv_image)
                 result_with_id = [image_id, result]
                 image_id = image_id + 1
 
@@ -46,7 +49,7 @@ class Server(object):
             self.server.close()
 
     def predict_and_fit(self, image):
-        predicted_img = recipe.predict('1538586986.23', image)
+        predicted_img = self.predictor.predict('1538586986.23', image)
         pts_left, pts_right = recipe.fit(predicted_img)
         return np.array([pts_left, pts_right])
 

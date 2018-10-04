@@ -5,6 +5,9 @@ import time
 import picamera
 import threading
 import pickle
+import numpy
+import cv2
+from util import detect
 
 class SplitFrames(object):
     def __init__(self, connection):
@@ -49,7 +52,7 @@ def send_img(cs):
 def recv_data(s):
     # wait for result from the server
     while (True):
-        buffer = s.recv(1024)
+        buffer = s.recv(4096)
         dosomething(buffer)
 
 
@@ -58,7 +61,9 @@ def dosomething(buffer):
     data = pickle.loads(buffer)
     image_id = data[0]
     pts_left, pts_right = data[1][0], data[1][1]
-    # TODO
+    blank_image = np.zeros((48, 160, 3), np.uint8)
+    fitted_img = detect.plot_lines(blank_image, pts_left, pts_right)
+    cv2.imwrite(join('.', 'comm', str(image_id) + '.png'), fitted_img)
     # print('Received', repr(data))
 
 
