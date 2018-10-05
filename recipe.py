@@ -33,7 +33,7 @@ class Predictior(object):
         else:
             self.model = None
 
-    def predict(self, model_name, image):
+    def predict(self, model_name, image, norm=False):
         predict_input = np.array([image])
         if ((self.model_name == model_name) and (self.model != None)):
             nn = self.model
@@ -41,13 +41,17 @@ class Predictior(object):
             self.model = Fcn(None, None, (image_h, image_w), None, None)
             self.model.load_model(join(model_path, model_name))
             self.model_name = model_name
-        raw_result = self.model.predict(predict_input)[0]
+        if (norm):
+            normalized_input = dataset.normalize(predict_input)
+            raw_result = self.model.predict(normalized_input)[0]
+        else:
+            raw_result = self.model.predict(predict_input)[0]
         result = util.transfer_to_rgb(raw_result)
         return result
 
 
-def train_nn_from_sketch():
-    data, labels = dataset.get_data(data_folder, label_folder, image_h, image_w)
+def train_nn_from_sketch(norm=False):
+    data, labels = dataset.get_data(data_folder, label_folder, image_h, image_w, norm)
     nn = Fcn(data, labels, (image_h, image_w), checkpoint_path, log_path)
     nn.define_loss()
     nn.build_layers()
@@ -56,8 +60,8 @@ def train_nn_from_sketch():
     return nn
 
 
-def train_nn_from_model(model_name):
-    data, labels = dataset.get_data(data_folder, label_folder, image_h, image_w)
+def train_nn_from_model(model_name, norm=False):
+    data, labels = dataset.get_data(data_folder, label_folder, image_h, image_w, norm)
     nn = Fcn(data, labels, (image_h, image_w), checkpoint_path, log_path)
     nn.define_loss()
     nn.load_model(join(model_path, model_name))
@@ -66,10 +70,10 @@ def train_nn_from_model(model_name):
     return nn
 
 
-def test_model(model_name):
+def test_model(model_name, norm=False):
     nn = Fcn(None, None, (image_h, image_w), None, None)
     nn.load_model(join(model_path, model_name))
-    test_data, test_names = dataset.get_test_data(testing_data_dir, image_h, image_w)
+    test_data, test_names = dataset.get_test_data(testing_data_dir, image_h, image_w, norm)
     result = nn.predict(test_data) # raw matrix of one-hot vectors
     # translate into RGB images
     rgb_img_list = []
@@ -104,17 +108,28 @@ def fit(image):
     return pts_left, pts_right
 
 
-if __name__ == '__main__':
-    # nn = train_nn_from_sketch()
-    # nn = train_nn_from_model('1538586986.23')
-    # test_model('1538068266.3')
+def _test():
     p = Predictior()
     test_img = util.get_an_image_from(join('.', 'data', 'aug', 'output', '342.png'))
     predicted_img = p.predict('1538586986.23', test_img)
     pts_left, pts_right = fit(predicted_img)
-    # result = np.array([pts_left, pts_right])
-    # result_with_id = [1, result]
-    # print(len(pickle.dumps(result_with_id)))
     blank_image = np.zeros((48, 160, 3), np.uint8)
     fitted_img = detect.plot_lines(blank_image, pts_left, pts_right)
     cv2.imwrite(join('.', 'comm', str(1) + '.png'), fitted_img)
+
+
+if __name__ == '__main__':
+    # nn = train_nn_from_sketch()
+    # nn = train_nn_from_model('1538672160.36')
+    # test_model('1538672160.36')
+
+    # with normalization
+    # nn = train_nn_from_sketch(True)
+    # nn = train_nn_from_model('1538674852.05', True)
+    test_model('1538680331.7627041')
+
+    # print(dataset.calculate_mean())
+    # test_img = util.get_an_image_from(join('.', 'data', 'aug', 'input', '1.png'))
+    # out_img = dataset.normalize(test_img)
+    # print(out_img)
+    # cv2.imwrite(join('.', 'comm', str(2) + '.png'), out_img)

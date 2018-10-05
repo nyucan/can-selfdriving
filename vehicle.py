@@ -20,7 +20,7 @@ def main():
     ## TODO crop image
     ## generate the predicted image with trained model
     # test_model('1538068266.3')
-    test_model('1538586986.23') # model trained with color shiftting
+    test_model('1538680331.7627041') # model trained with color shiftting
     ## fit the lane with curve
     fit_lane()
     ## TODO decide how to move
@@ -28,3 +28,5 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+

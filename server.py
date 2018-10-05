@@ -2,7 +2,9 @@
 import io
 import socket
 import struct
-import pickle
+# import pickle
+import numpy as np
+import cv2
 from PIL import Image
 
 import recipe
@@ -12,7 +14,7 @@ class Server(object):
     def __init__(self):
         self.predictor = recipe.Predictior('1538586986.23')
         self.server = socket.socket()
-        self.server.bind(('0.0.0.0', 8888))
+        self.server.bind(('0.0.0.0', 8000))
         self.server.listen(0)
         print('waitting for connection')
         self.s = self.server.accept()[0]
@@ -35,13 +37,20 @@ class Server(object):
                 image = Image.open(image_stream).convert('RGB')
                 open_cv_image = np.array(image)
 
-                # image.save('./comm/image-' + str(image_id) + '.png')
+                open_cv_image = cv2.resize(open_cv_image, (220, 160))
+                # cv2.imwrite('./comm/image-' + str(image_id) + '.png', open_cv_image)
+                open_cv_image = open_cv_image[60:108, 30:190]
+                cv2.imwrite('./comm/' + str(image_id) + '.png', open_cv_image)
+
                 # print('transmited image' + str(image_id))
                 result = self.predict_and_fit(open_cv_image)
-                result_with_id = [image_id, result]
+                # result_with_id = [image_id, result]
                 image_id = image_id + 1
 
-                s_result = pickle.dumps(result_with_id)
+                s_result = result.tobytes()
+                print(result.dtype.name)
+                print(result.shape)
+                # s_result = pickle.dumps(result_with_id)
                 self.s.sendall(s_result)
                 # self.connection.write('transmited image' + str(image_id))
         finally:
@@ -49,7 +58,7 @@ class Server(object):
             self.server.close()
 
     def predict_and_fit(self, image):
-        predicted_img = self.predictor.predict('1538586986.23', image)
+        predicted_img = self.predictor.predict('1538680331.7627041', image)
         pts_left, pts_right = recipe.fit(predicted_img)
         return np.array([pts_left, pts_right])
 

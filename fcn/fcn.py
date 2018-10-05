@@ -1,7 +1,6 @@
 # python 2.7
 # the fcn model for semantic segmentation
 from __future__ import absolute_import, division, print_function
-import os.path
 from os.path import join
 import time
 
@@ -83,6 +82,8 @@ class Fcn(object):
     def save_checkpoint(self):
         t = time.time()
         keras.models.save_model(self.model, join(self.checkpoint_path, str(t)), overwrite=True, include_optimizer=True)
+        print('save model as ' + str(t))
+
 
 
     def load_model(self, model_path):

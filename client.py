@@ -5,9 +5,10 @@ import time
 import picamera
 import threading
 import pickle
-import numpy
+import numpy as np
 import cv2
 from util import detect
+from os.path import join
 
 class SplitFrames(object):
     def __init__(self, connection):
@@ -34,7 +35,8 @@ def send_img(cs):
     connection = cs.makefile('wb')
     try:
         output = SplitFrames(connection)
-        with picamera.PiCamera(resolution='VGA', framerate=30) as camera:
+        # with picamera.PiCamera(resolution='VGA', framerate=30) as camera:
+        with picamera.PiCamera(resolution=(220, 160), framerate=30) as camera:
             time.sleep(2)
             start = time.time()
             camera.start_recording(output, format='mjpeg')
@@ -51,16 +53,20 @@ def send_img(cs):
 
 def recv_data(s):
     # wait for result from the server
+    image_id = 0
     while (True):
         buffer = s.recv(4096)
-        dosomething(buffer)
+        print('receive result: ' + image_id)
+        dosomething(buffer, image_id)
+        image_id += 1
 
 
-def dosomething(buffer):
+def dosomething(buffer, image_id):
     # placeholder
-    data = pickle.loads(buffer)
-    image_id = data[0]
-    pts_left, pts_right = data[1][0], data[1][1]
+    # data = pickle.loads(buffer)
+    data = np.frombuffer(buffer, dtype=np.int32).reshape(2, 50, 2)
+
+    pts_left, pts_right = data[0], data[1]
     blank_image = np.zeros((48, 160, 3), np.uint8)
     fitted_img = detect.plot_lines(blank_image, pts_left, pts_right)
     cv2.imwrite(join('.', 'comm', str(image_id) + '.png'), fitted_img)
@@ -69,7 +75,7 @@ def dosomething(buffer):
 
 if __name__ == '__main__':
     cs = socket.socket()
-    cs.connect(('192.168.20.113', 8000))
+    cs.connect(('192.168.20.104', 8000))
     t1 = threading.Thread(target=send_img, args=(cs,))
     t2 = threading.Thread(target=recv_data, args=(cs,))
     t1.start()
