@@ -8,7 +8,9 @@ from os.path import join
 from glob import glob
 from detect_peaks import detect_peaks
 from debuger import breakpoint
+
 import util
+import math_support as ms
 
 
 lane_color = np.uint8([[[0,0,0]]])
@@ -32,8 +34,10 @@ def lane_filter(img, lower_lane_color, upper_lane_color):
     return laneIMG
 
 
-# find the centers for two lines
 def find_lane_centers(laneIMG_binary):
+    """Find the centers for two lines.
+
+    """
     # find peaks as the starting points of the lanes (left and right)
     vector_sum_of_lane_marks = np.sum(laneIMG_binary, axis=0)
     peaks = detect_peaks(vector_sum_of_lane_marks, mpd=peaks_distance)
@@ -49,13 +53,15 @@ def find_lane_centers(laneIMG_binary):
     return lane_center_left, lane_center_right
 
 
-# to find pixels/indices of one of the left and the right lane
-# need to call twice, one for left line, and the other for right lane
 def find_pixels_of_lane(laneIMG_binary, lane_center, window_size, width_of_laneIMG_binary):
-    indices_nonzero = np.nonzero(laneIMG_binary[:,np.max([0, lane_center-window_size]):np.min([width_of_laneIMG_binary, lane_center+window_size])])
+    """ Find pixels/indices of one of the left and the right lane
+        need to call twice, one for left line, and the other for right lane
+    """
+    cropped_bin = laneIMG_binary[:,np.max([0, lane_center - window_size]):np.min([width_of_laneIMG_binary, lane_center+window_size])]
+    indices_nonzero = np.nonzero(cropped_bin)
     x = indices_nonzero[0]
     # shifted because we are using a part of laneIMG to find non-zero elements
-    y = indices_nonzero[1] + np.max([0,lane_center - window_size])
+    y = indices_nonzero[1] + np.max([0, lane_center - window_size])
     return x, y
 
 
@@ -89,6 +95,52 @@ def fit_image(image):
         return image, None, None
     finally:
         return image, pts_left, pts_right
+
+
+def get_client_parameters(image):
+    """ Calculate the polynormial fitting parameters.
+        @returns
+            w_left:                np.array
+            w_right:               np.array
+            w_mid:                 np.array
+            distance_to_center:    float64
+                y - image_center
+                the car on the right: negative
+                the car on the left: positive
+            distance_at_mid:       float64
+                y - image_center
+            radian_to_center:         float64
+                arctan(distance_at_mid / (img_height / 2))
+                the car on the right: negative
+                the car on the left: positive
+            curvature_at_mid:      float64
+    """
+    number_points_for_poly_fit = 50
+    poly_order = 2
+    laneIMG = lane_filter(image, lower_lane_color1, upper_lane_color1)
+    laneIMG_binary = laneIMG / 255
+    lane_center_left, lane_center_right = find_lane_centers(laneIMG_binary)
+    image_center = np.int(width_of_laneIMG_binary/2)
+
+    w_left = np.polyfit(x_left, y_left, poly_order)
+    w_right = np.polyfit(x_right, y_right, poly_order)
+    w_mid = (w_left + w_right) / 2
+
+    x_fitted = np.linspace(0, img_height, number_points_for_poly_fit)
+    poly_fit_mid = np.poly1d(w_mid)
+    y_mid_fitted = poly_fit_mid(x_fitted)
+
+    distance_to_center = y_bottom - image_center
+
+    # compute curvature at some point x
+    # now, point x is in the middle (from height) of the lane centerline
+    x_mid = np.int(x_fitted[int(number_points_for_poly_fit / 2)])
+    y_mid = np.int(y_mid_fitted[int(number_points_for_poly_fit / 2)])
+    distance_at_mid = y_mid - image_center
+    radian_to_center = ms.radian(distance_at_mid, image_center)
+    curvature_at_mid = ms.curvature(w_mid, x_mid, 2)
+
+    return w_left, w_right, w_mid, distance_to_center, distance_at_mid, radian_to_center, curvature_at_mid
 
 
 def plot_lines(image, pts_left, pts_right):

@@ -20,6 +20,11 @@ class Server(object):
         self.s = self.server.accept()[0]
         self.connection = self.s.makefile('rb')
 
+
+    def get_image():
+        pass
+
+
     def handle(self):
         try:
             image_id = 0
@@ -58,9 +63,13 @@ class Server(object):
             self.server.close()
 
     def predict_and_fit(self, image):
+        """ Make prediction and then fit the predicted image.
+            @return: image, left_parameters, left_parameters
+        """
         predicted_img = self.predictor.predict('1538680331.7627041', image)
-        pts_left, pts_right = recipe.fit(predicted_img)
-        return np.array([pts_left, pts_right])
+        # pts_left, pts_right = recipe.fit(predicted_img)
+        wrapped_parameters = recipe.get_fitting_parameters(predicted_img)
+        return wrapped_parameters
 
 
 if __name__ == '__main__':
