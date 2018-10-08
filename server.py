@@ -11,68 +11,71 @@ import recipe
 
 
 class Server(object):
-    def __init__(self):
-        self.predictor = recipe.Predictior('1538586986.23')
+    def __init__(self, model):
+        self.predictor = recipe.Predictior(model)
         self.server = socket.socket()
-        self.server.bind(('0.0.0.0', 8000))
+        self.server.bind(('0.0.0.0', 8888))
         self.server.listen(0)
-        print('waitting for connection')
+        print('server: waitting for connection')
         self.s = self.server.accept()[0]
         self.connection = self.s.makefile('rb')
+        print('server: new connection')
 
+    def recv_images(self):
+        """ Get image from the server.
+            @returns
+                return `None` if no more images
+        """
+        image_len = struct.unpack('<L', self.connection.read(struct.calcsize('<L')))[0]
+        if not image_len:
+            return None
+        # Construct a stream to hold the image data and read the image data from the connection
+        image_stream = io.BytesIO()
+        image_stream.write(self.connection.read(image_len))
+        image_stream.seek(0)
+        image = Image.open(image_stream).convert('RGB')
+        # transfer into opencv image and crop
+        open_cv_image = np.array(image)
+        open_cv_image = cv2.resize(open_cv_image, (220, 160))
+        open_cv_image = open_cv_image[60:108, 30:190]
+        # print(open_cv_image)
+        return open_cv_image
 
-    def get_image():
-        pass
-
-
-    def handle(self):
+    def listen(self):
+        print('server: listening ...')
         try:
             image_id = 0
             while True:
-                # Read the length of the image as a 32-bit unsigned int. If the length is zero, quit the loop
-                image_len = struct.unpack('<L', self.connection.read(struct.calcsize('<L')))[0]
-                if not image_len:
+                new_img = self.recv_images()
+                if (new_img is None):
                     break
-                # Construct a stream to hold the image data and read the image data from the connection
-                image_stream = io.BytesIO()
-                image_stream.write(self.connection.read(image_len))
-                # Rewind the stream, open it as an image with PIL and do some processing on it
-                image_stream.seek(0)
-                # image = Image.open(image_stream)
-                image = Image.open(image_stream).convert('RGB')
-                open_cv_image = np.array(image)
-
-                open_cv_image = cv2.resize(open_cv_image, (220, 160))
-                # cv2.imwrite('./comm/image-' + str(image_id) + '.png', open_cv_image)
-                open_cv_image = open_cv_image[60:108, 30:190]
-                cv2.imwrite('./comm/' + str(image_id) + '.png', open_cv_image)
-
-                # print('transmited image' + str(image_id))
-                result = self.predict_and_fit(open_cv_image)
-                # result_with_id = [image_id, result]
+                cv2.imwrite('./comm/' + str(image_id) + '.png', new_img)
+                packaged_parameters = self.predict_and_fit(new_img)
+                packaged_parameters_with_id = np.concatenate(([image_id], packaged_parameters))
+                s_packaged_parameters = packaged_parameters_with_id.tobytes()
+                self.s.sendall(s_packaged_parameters)
+                print('transmited image ' + str(image_id))
                 image_id = image_id + 1
-
-                s_result = result.tobytes()
-                print(result.dtype.name)
-                print(result.shape)
-                # s_result = pickle.dumps(result_with_id)
-                self.s.sendall(s_result)
-                # self.connection.write('transmited image' + str(image_id))
+        except:
+            print('closed by thread')
         finally:
-            self.connection.close()
-            self.server.close()
+            self.close_connection()
+            print('connection closed')
 
     def predict_and_fit(self, image):
         """ Make prediction and then fit the predicted image.
             @return: image, left_parameters, left_parameters
         """
         predicted_img = self.predictor.predict('1538680331.7627041', image)
-        # pts_left, pts_right = recipe.fit(predicted_img)
         wrapped_parameters = recipe.get_fitting_parameters(predicted_img)
         return wrapped_parameters
 
+    def close_connection(self):
+        self.connection.close()
+        self.server.close()
+
 
 if __name__ == '__main__':
-    s = Server()
-    s.handle()
+    s = Server('1538680331.7627041')
+    s.listen()
 

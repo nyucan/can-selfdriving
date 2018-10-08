@@ -101,8 +101,8 @@ def get_fitting_parameters(image):
     """
     w_l, w_r, w_m, dc, dm, radian, curvature = detect.get_client_parameters(image)
     wrapped_parameters = np.array([], dtype=np.float64)
-    wrapped_parameters = np.concatenate(w_l, w_r, w_m)
-    wrapped_parameters = np.concatenate(wrapped_parameters, [dc, dm, radian, curvature])
+    wrapped_parameters = np.concatenate((wrapped_parameters, w_l, w_r, w_m))
+    wrapped_parameters = np.concatenate((wrapped_parameters, [dc, dm, radian, curvature]))
     return wrapped_parameters
 
 

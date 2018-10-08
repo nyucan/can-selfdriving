@@ -120,7 +120,9 @@ def get_client_parameters(image):
     laneIMG = lane_filter(image, lower_lane_color1, upper_lane_color1)
     laneIMG_binary = laneIMG / 255
     lane_center_left, lane_center_right = find_lane_centers(laneIMG_binary)
-    image_center = np.int(width_of_laneIMG_binary/2)
+    image_center = np.int(img_width / 2)
+    x_left, y_left = find_pixels_of_lane(laneIMG_binary, lane_center_left, window_size, img_width)
+    x_right, y_right = find_pixels_of_lane(laneIMG_binary, lane_center_right, window_size, img_width)
 
     w_left = np.polyfit(x_left, y_left, poly_order)
     w_right = np.polyfit(x_right, y_right, poly_order)
@@ -129,6 +131,8 @@ def get_client_parameters(image):
     x_fitted = np.linspace(0, img_height, number_points_for_poly_fit)
     poly_fit_mid = np.poly1d(w_mid)
     y_mid_fitted = poly_fit_mid(x_fitted)
+    # x_bottom = np.int(x_fitted[-1])
+    y_bottom = np.int(y_mid_fitted[-1])
 
     distance_to_center = y_bottom - image_center
 

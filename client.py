@@ -4,10 +4,8 @@ import struct
 import time
 import picamera
 import threading
-import pickle
 import numpy as np
 import cv2
-from util import detect
 from os.path import join
 
 class SplitFrames(object):
@@ -33,49 +31,54 @@ class SplitFrames(object):
 
 def send_img(cs):
     connection = cs.makefile('wb')
+    print('ready to send images')
     try:
         output = SplitFrames(connection)
         # with picamera.PiCamera(resolution='VGA', framerate=30) as camera:
         with picamera.PiCamera(resolution=(220, 160), framerate=30) as camera:
             time.sleep(2)
-            start = time.time()
             camera.start_recording(output, format='mjpeg')
-            camera.wait_recording(30)
+            camera.wait_recording(10)
             camera.stop_recording()
             # Write the terminating 0-length to the connection to let the server know we're done
             connection.write(struct.pack('<L', 0))
     finally:
+        time.sleep(2)
         connection.close()
-        client_socket.close()
-        finish = time.time()
-        print('Sent %d images in %d seconds at %.2ffps' % (output.count, finish-start, output.count / (finish-start)))
+        cs.close()
+        print('connection closed')
 
 
 def recv_data(s):
-    # wait for result from the server
-    image_id = 0
+    """Wait for results from the server.
+    """
     while (True):
-        buffer = s.recv(4096)
-        print('receive result: ' + image_id)
-        dosomething(buffer, image_id)
-        image_id += 1
+        try:
+            buffer = s.recv(2048)
+            if (buffer is not None):
+                dosomething(buffer)
+                # TODO
+        except:
+            print('thread: recv data finish')
+            break
 
 
-def dosomething(buffer, image_id):
-    # placeholder
-    # data = pickle.loads(buffer)
-    data = np.frombuffer(buffer, dtype=np.int32).reshape(2, 50, 2)
-
-    pts_left, pts_right = data[0], data[1]
-    blank_image = np.zeros((48, 160, 3), np.uint8)
-    fitted_img = detect.plot_lines(blank_image, pts_left, pts_right)
-    cv2.imwrite(join('.', 'comm', str(image_id) + '.png'), fitted_img)
-    # print('Received', repr(data))
+def dosomething(buffer):
+    packaged_parameters = np.frombuffer(buffer, dtype=np.float64).reshape(14)
+    image_id = int(packaged_parameters[0])
+    w_left = packaged_parameters[1:4]
+    w_right = packaged_parameters[4:7]
+    w_middle = packaged_parameters[7:10]
+    distance_to_center = packaged_parameters[10]
+    distance_at_middle = packaged_parameters[11]
+    radian = packaged_parameters[12]
+    curvature = packaged_parameters[13]
+    print('Received: ', str(image_id))
 
 
 if __name__ == '__main__':
     cs = socket.socket()
-    cs.connect(('192.168.20.104', 8000))
+    cs.connect(('192.168.20.104', 8888))
     t1 = threading.Thread(target=send_img, args=(cs,))
     t2 = threading.Thread(target=recv_data, args=(cs,))
     t1.start()
