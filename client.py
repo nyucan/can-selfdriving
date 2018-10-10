@@ -8,6 +8,9 @@ import numpy as np
 import cv2
 from os.path import join
 
+from controller import Controller
+
+
 class SplitFrames(object):
     def __init__(self, connection):
         self.connection = connection
@@ -27,6 +30,11 @@ class SplitFrames(object):
                 self.count += 1
                 self.stream.seek(0)
         self.stream.write(buf)
+
+
+class Client(object):
+    def __init__(self):
+        pass
 
 
 def send_img(cs):
@@ -49,21 +57,33 @@ def send_img(cs):
         print('connection closed')
 
 
-def recv_data(s):
+def recv_data(s, contorller):
     """Wait for results from the server.
     """
+    pre_img_id = -1
     while (True):
         try:
             buffer = s.recv(2048)
             if (buffer is not None):
-                dosomething(buffer)
+                img_id, dc, dm, cur, signal = unpackage_paras(buffer)
+                if img_id <= pre_img_id:
+                    # outdate data
+                    continue
+                print('Received: ' + str(img_id))
+                make_decisiton_with(dc, dm, cur, signal, contorller)
+                pre_img_id = img_id  # update
                 # TODO
         except:
             print('thread: recv data finish')
             break
 
 
-def dosomething(buffer):
+def unpackage_paras(buffer):
+    """ Unpackage the parameters from buffer.
+        @Returns:
+            image_id
+            distance_to_center
+    """
     packaged_parameters = np.frombuffer(buffer, dtype=np.float64).reshape(14)
     image_id = int(packaged_parameters[0])
     w_left = packaged_parameters[1:4]
@@ -73,13 +93,40 @@ def dosomething(buffer):
     distance_at_middle = packaged_parameters[11]
     radian = packaged_parameters[12]
     curvature = packaged_parameters[13]
-    print('Received: ', str(image_id))
+
+    stop_signal = (np.all(w_left == np.zeros(3)) and np.all(w_right == np.zeros(3)))
+    return image_id, distance_to_center, distance_at_middle, curvature, stop_signal
+
+
+def make_decisiton_with(dc, dm, cur, stop_signal, contorller):
+    if stop_signal:
+        # stop the car!
+        contorller.motor_stop()
+    else:
+        contorller.make_decisiton(dc, dm, cur)
+        # both sides were detected
+
+
+def main():
+    # to store the previous curves for left and right lane
+    w_left_previous, w_right_previous = np.zeros((3)), np.zeros((3))
+
+    # setup socket connection
+    cs = socket.socket()
+    cs.connect(('192.168.20.104', 8888))
+
+    # setup motor
+    contorller = Controller()
+    contorller.motor_startup()
+
+    # create threads
+    send_img_thread = threading.Thread(target=send_img, args=(cs,))
+    recv_data_thread = threading.Thread(target=recv_data, args=(cs, contorller,))
+
+    # start all threads
+    send_img_thread.start()
+    recv_data_thread.start()
 
 
 if __name__ == '__main__':
-    cs = socket.socket()
-    cs.connect(('192.168.20.104', 8888))
-    t1 = threading.Thread(target=send_img, args=(cs,))
-    t2 = threading.Thread(target=recv_data, args=(cs,))
-    t1.start()
-    t2.start()
+    main()

@@ -8,15 +8,18 @@ import cv2
 from PIL import Image
 
 import recipe
+from util.detect import Detector
 
 
 class Server(object):
     def __init__(self, model):
         self.predictor = recipe.Predictior(model)
+        self.detector = Detector()
         self.server = socket.socket()
         self.server.bind(('0.0.0.0', 8888))
         self.server.listen(0)
         print('server: waitting for connection')
+
         self.s = self.server.accept()[0]
         self.connection = self.s.makefile('rb')
         print('server: new connection')
@@ -34,11 +37,9 @@ class Server(object):
         image_stream.write(self.connection.read(image_len))
         image_stream.seek(0)
         image = Image.open(image_stream).convert('RGB')
-        # transfer into opencv image and crop
         open_cv_image = np.array(image)
         open_cv_image = cv2.resize(open_cv_image, (220, 160))
         open_cv_image = open_cv_image[60:108, 30:190]
-        # print(open_cv_image)
         return open_cv_image
 
     def listen(self):
@@ -50,11 +51,11 @@ class Server(object):
                 if (new_img is None):
                     break
                 cv2.imwrite('./comm/' + str(image_id) + '.png', new_img)
+                print('transmited image ' + str(image_id))
                 packaged_parameters = self.predict_and_fit(new_img)
                 packaged_parameters_with_id = np.concatenate(([image_id], packaged_parameters))
                 s_packaged_parameters = packaged_parameters_with_id.tobytes()
                 self.s.sendall(s_packaged_parameters)
-                print('transmited image ' + str(image_id))
                 image_id = image_id + 1
         except:
             print('closed by thread')
@@ -66,8 +67,9 @@ class Server(object):
         """ Make prediction and then fit the predicted image.
             @return: image, left_parameters, left_parameters
         """
-        predicted_img = self.predictor.predict('1538680331.7627041', image)
-        wrapped_parameters = recipe.get_fitting_parameters(predicted_img)
+        predicted_img = self.predictor.predict(image)
+        wrapped_parameters = self.detector.get_wrapped_all_parameters(predicted_img)
+        # wrapped_parameters = recipe.get_fitting_parameters(predicted_img)
         return wrapped_parameters
 
     def close_connection(self):

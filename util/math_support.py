@@ -30,3 +30,24 @@ def radian(distance_at_mid, image_center):
     else:
         return -math.atan(-tangent)
 
+
+def compute_intercept(slope, x, y):
+    """ Compute intercept of the line goes through (x,y) with the given slope.
+    """
+    return y - slope*x
+
+
+def slope_function(slope, intercept, x):
+    """ This is the tangent line function at point x.
+    """
+    result = slope * x + intercept
+    return result
+
+
+# compute two points on the tangent line that tangent to the mid_fitted line at x_curv
+def compute_points_on_tangent_line(slope, intercept, x_curv, length_tangent_line):
+    x_curv_1 = x_curv - int(length_tangent_line/2)
+    y_curv_1 = int(slope_function(first_order_derivative_at_x, intercept, x_curv_1))
+    x_curv_2 = x_curv + int(length_tangent_line/2)
+    y_curv_2 = int(slope_function(first_order_derivative_at_x, intercept, x_curv_2))
+    return x_curv_1, y_curv_1, x_curv_2, y_curv_2

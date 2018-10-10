@@ -7,162 +7,198 @@ import os
 from os.path import join
 from glob import glob
 from detect_peaks import detect_peaks
-from debuger import breakpoint
 
 import util
 import math_support as ms
 
 
-lane_color = np.uint8([[[0,0,0]]])
-lower_lane_color1 = lane_color
-upper_lane_color1 = lane_color + 10
-img_height = 48
-img_width = 160
-peaks_distance = 55
-window_size = int(peaks_distance / 2)
+LANE_COLOR = np.uint8([[[0,0,0]]])
+LOW_LANE_COLOR, UPPER_LANE_COLOR = LANE_COLOR, LANE_COLOR + 20
+IMG_HEIGHT, IMG_WIDTH = 48, 160
+IMAGE_CENTER = np.int(IMG_WIDTH / 2)
+PEAK_DISTANCE = 55
+WINDOW_SIZE = int(PEAK_DISTANCE / 2)
+# this number determines how long the tangent line is (in pixel)
+LENGTH_OF_TANGENT_LINE = 20
 
+# number of points for polynormial fitting
+NUMBER_OF_POINTS = 48
+POLY_ORDER = 2
 
-# crop an image
-def crop_image(img, lower_bound, upper_bound):
-    img_cropped = img[int(img.shape[0]*lower_bound):int(img.shape[0]*upper_bound),:]
-    return img_cropped
+##  --- previous information --- ##
+# initialize the lane_peaks_previous
+## ----------------------------- ##
+class Detector(object):
+    def __init__(self):
+        # initialize the lane_peaks_previous
+        self.left_peak_previous, self.right_peak_previous = 0, IMG_WIDTH
+        # to store the previous curves for left and right lane
+        self.w_left_previous, self.w_right_previous = np.zeros((3)), np.zeros((3))
 
+    def find_lane_centers(self, laneIMG_binary):
+        """ Find the centers for two lines.
+        """
+        vector_sum_of_lane_marks = np.sum(laneIMG_binary, axis=0)
+        peaks = detect_peaks(vector_sum_of_lane_marks, mpd=PEAK_DISTANCE)
+        if (peaks.shape[0] == 1):
+            # if only one line
+            current_peak = peaks[0]
+            if (np.abs(current_peak - self.left_peak_previous) <= np.abs(current_peak - self.right_peak_previous)):
+                # print('left line remains, right line is missing')
+                lane_center_right = None
+                lane_center_left = current_peak
+            else:
+                # print('right line remains, left line is missing')
+                lane_center_left = None
+                lane_center_right = current_peak
+        elif (peaks.shape[0] == 0):
+            # no peak is detected
+            lane_center_left, lane_center_right = None, None
+        else:
+            # we only use the first two peaks as the starting points of the lanes
+            peaks = peaks[:2]
+            lane_center_left = peaks[0]
+            lane_center_right = peaks[1]
+        self.left_peak_previous, self.right_peak_previous = lane_center_left, lane_center_right
+        return lane_center_left, lane_center_right
 
-# use color filter to show lanes in the image
-def lane_filter(img, lower_lane_color, upper_lane_color):
-    laneIMG = cv2.inRange(img, lower_lane_color, upper_lane_color)
-    return laneIMG
+    def calc_fitting_weights(self, image):
+        """ Calculate the polynormial fitting parameters.
+            @returns
+                w_left:                np.array
+                w_right:               np.array
+                w_mid:                 np.array
+        """
+        laneIMG = self.lane_filter(image, LOW_LANE_COLOR, UPPER_LANE_COLOR)
+        laneIMG_binary = laneIMG / 255
+        lane_center_left, lane_center_right = self.find_lane_centers(laneIMG_binary)
 
+        w_left, w_right, w_mid = np.zeros(3), np.zeros(3), np.zeros(3)
+        x_left, y_left = self.find_pixels_of_lane(laneIMG_binary, lane_center_left, window_size, IMG_WIDTH)
+        x_right, y_right = self.find_pixels_of_lane(laneIMG_binary, lane_center_right, window_size, IMG_WIDTH)
 
-def find_lane_centers(laneIMG_binary):
-    """Find the centers for two lines.
+        if (lane_center_left is None and lane_center_right is None):
+            print('Detect: End of the trial: No lines')
+            # return [0 ... 0]
+            return  w_left, w_right, w_mid
+        else:
+            if (lane_center_left is not None):
+                w_right = self.w_right_previous
+                try:
+                    w_left = np.polyfit(x_left, y_left, POLY_ORDER)
+                    self.w_left_previous = w_left
+                except ValueError:
+                        w_left = self.w_left_previous
+                except np.RankWarning:
+                    print('Detector: Rank Warning!!!')
+                    w_left = self.w_left_previous
+            if (lane_center_right is not None):
+                w_left = self.w_left_previous
+                try:
+                    w_right = np.polyfit(x_right, y_right, POLY_ORDER)
+                    self.w_right_previous = w_right
+                except ValueError:
+                        w_right = self.w_right_previous
+                except np.RankWarning:
+                    print('Detector: Rank Warning!!!')
+                    w_right = self.w_right_previous
+            if (lane_center_left is not None and lane_center_right is not None)
+                w_mid = (w_left + w_right) / 2
 
-    """
-    # find peaks as the starting points of the lanes (left and right)
-    vector_sum_of_lane_marks = np.sum(laneIMG_binary, axis=0)
-    peaks = detect_peaks(vector_sum_of_lane_marks, mpd=peaks_distance)
-    # we only use the first two peaks as the starting points of the lanes
-    if (len(peaks) >= 2):
-        peaks = peaks[:2]
-        lane_center_left = peaks[0]
-        lane_center_right = peaks[1]
-    else:
-        # set center manually
-        lane_center_left = 60
-        lane_center_right = 110
-    return lane_center_left, lane_center_right
+        return w_left, w_right, w_mid
 
+    def get_all_parameters(self, image):
+        """ Calculate all parameters used for Q-Learning.
+            @returns
+                w_left:                np.array
+                w_right:               np.array
+                w_mid:                 np.array
+                distance_to_center:    float64
+                    y - IMAGE_CENTER
+                    the car on the right: negative
+                    the car on the left: positive
+                distance_at_mid:       float64
+                    y - IMAGE_CENTER
+                radian_to_center:         float64
+                    arctan(distance_at_mid / (IMG_HEIGHT / 2))
+                    the car on the right: negative
+                    the car on the left: positive
+                curvature_at_mid:      float64
+            returns `None` if there is no line at all!
+        """
+        w_left, w_right, w_mid = self.calc_fitting_weights(image)
 
-def find_pixels_of_lane(laneIMG_binary, lane_center, window_size, width_of_laneIMG_binary):
-    """ Find pixels/indices of one of the left and the right lane
-        need to call twice, one for left line, and the other for right lane
-    """
-    cropped_bin = laneIMG_binary[:,np.max([0, lane_center - window_size]):np.min([width_of_laneIMG_binary, lane_center+window_size])]
-    indices_nonzero = np.nonzero(cropped_bin)
-    x = indices_nonzero[0]
-    # shifted because we are using a part of laneIMG to find non-zero elements
-    y = indices_nonzero[1] + np.max([0, lane_center - window_size])
-    return x, y
+        x_fitted = np.linspace(0, IMG_HEIGHT, NUMBER_OF_POINTS)
+        poly_fit_mid = np.poly1d(w_mid)
+        y_mid_fitted = poly_fit_mid(x_fitted)
+        # x_bottom = np.int(x_fitted[-1])
+        y_bottom = np.int(y_mid_fitted[-1])
 
+        distance_to_center = y_bottom - IMAGE_CENTER
+        # compute curvature at some point x
+        # now, point x is in the middle (from height) of the lane centerline
+        x_mid = np.int(x_fitted[int(NUMBER_OF_POINTS / 2)])
+        y_mid = np.int(y_mid_fitted[int(NUMBER_OF_POINTS / 2)])
+        distance_at_mid = y_mid - IMAGE_CENTER
+        radian_to_center = ms.radian(distance_at_mid, IMAGE_CENTER)
+        curvature_at_mid = ms.curvature(w_mid, x_mid, 2)
+        return w_left, w_right, w_mid, distance_to_center, distance_at_mid, radian_to_center, curvature_at_mid
 
-def fit_image(image):
-    number_points_for_poly_fit = 50
-    x_fitted = np.linspace(0, img_height, number_points_for_poly_fit)
-    poly_order = 2
+    def get_wrapped_all_parameters(self, image):
+        """ Wrap the parameters.
+            @return wrapped_parameters: np.array
+                [0:3]  :  w_l
+                [3:6]  :  w_r
+                [6:9]  :  w_m
+                [9]    :  dc
+                [10]   :  dm
+                [11]   :  radian
+                [12]   :  curvature
+        """
+        w_l, w_r, w_m, dc, dm, r, c = self.get_all_parameters(image)
+        wrapped_parameters = np.array([], dtype=np.float64)
+        wrapped_parameters = np.concatenate((wrapped_parameters, w_l, w_r, w_m, [dc, dm, r, c]))
+        return wrapped_parameters
 
-    laneIMG = lane_filter(image, lower_lane_color1, upper_lane_color1)
-    laneIMG_binary = laneIMG / 255
+    def find_pixels_of_lane(self, laneIMG_binary, lane_center, window_size, width_of_laneIMG_binary):
+        """ Find pixels/indices of one of the left and the right lane
+            need to call twice, one for left line, and the other for right lane
+        """
+        cropped_bin = laneIMG_binary[:,np.max([0, lane_center - window_size]):np.min([width_of_laneIMG_binary, lane_center + window_size])]
+        indices_nonzero = np.nonzero(cropped_bin)
+        x = indices_nonzero[0]
+        # shifted because we are using a part of laneIMG to find non-zero elements
+        y = indices_nonzero[1] + np.max([0, lane_center - window_size])
+        return x, y
 
-    lane_center_left, lane_center_right = find_lane_centers(laneIMG_binary)
+    def crop_image(self, img, lower_bound, upper_bound):
+        img_cropped = img[int(img.shape[0]*lower_bound):int(img.shape[0]*upper_bound),:]
+        return img_cropped
 
-    try:
-        x_left, y_left = find_pixels_of_lane(laneIMG_binary, lane_center_left, window_size, img_width)
-        w_left = np.polyfit(x_left, y_left, poly_order)
-        poly_fit_left = np.poly1d(w_left)
-        y_left_fitted = poly_fit_left(x_fitted)
+    def lane_filter(self, img, lower_lane_color, upper_lane_color):
+        """ Use color filter to show lanes in the image.
+        """
+        laneIMG = cv2.inRange(img, lower_lane_color, upper_lane_color)
+        return laneIMG
 
-        x_right, y_right = find_pixels_of_lane(laneIMG_binary, lane_center_right, window_size, img_width)
-        w_right = np.polyfit(x_right, y_right, poly_order)
-        poly_fit_right = np.poly1d(w_right)
-        y_right_fitted = poly_fit_right(x_fitted)
-
-        pts_left = np.array([y_left_fitted, x_fitted], np.int32).transpose()
-        pts_right = np.array([y_right_fitted, x_fitted], np.int32).transpose()
+    def plot_lines(self, image, pts_left, pts_right):
         cv2.polylines(image, [pts_left], False, (0, 255, 255), 1)
         cv2.polylines(image, [pts_right], False, (0, 255, 255), 1)
-    except TypeError as err:
-        print('points not enough')
-        return image, None, None
-    finally:
-        return image, pts_left, pts_right
+        return cv2.resize(image, (0,0), fx=6, fy=6)
 
 
-def get_client_parameters(image):
-    """ Calculate the polynormial fitting parameters.
-        @returns
-            w_left:                np.array
-            w_right:               np.array
-            w_mid:                 np.array
-            distance_to_center:    float64
-                y - image_center
-                the car on the right: negative
-                the car on the left: positive
-            distance_at_mid:       float64
-                y - image_center
-            radian_to_center:         float64
-                arctan(distance_at_mid / (img_height / 2))
-                the car on the right: negative
-                the car on the left: positive
-            curvature_at_mid:      float64
-    """
-    number_points_for_poly_fit = 50
-    poly_order = 2
-    laneIMG = lane_filter(image, lower_lane_color1, upper_lane_color1)
-    laneIMG_binary = laneIMG / 255
-    lane_center_left, lane_center_right = find_lane_centers(laneIMG_binary)
-    image_center = np.int(img_width / 2)
-    x_left, y_left = find_pixels_of_lane(laneIMG_binary, lane_center_left, window_size, img_width)
-    x_right, y_right = find_pixels_of_lane(laneIMG_binary, lane_center_right, window_size, img_width)
+# def mark_images_from(ori_path, dest_path):
+#     image_paths = glob(os.path.join(ori_path, '*.png'))
+#     image_paths.sort(key=util.filename_key)
+#     for i in range(len(image_paths)):
+#         image = cv2.imread(image_paths[i])
+#         image, pts_left, pts_right = fit_image(image)
+#         marked_image = plot_lines(image, pts_left, pts_right)
+#         cv2.imwrite(join(dest_path, str(i + 1) + '.png'), marked_image)
 
-    w_left = np.polyfit(x_left, y_left, poly_order)
-    w_right = np.polyfit(x_right, y_right, poly_order)
-    w_mid = (w_left + w_right) / 2
-
-    x_fitted = np.linspace(0, img_height, number_points_for_poly_fit)
-    poly_fit_mid = np.poly1d(w_mid)
-    y_mid_fitted = poly_fit_mid(x_fitted)
-    # x_bottom = np.int(x_fitted[-1])
-    y_bottom = np.int(y_mid_fitted[-1])
-
-    distance_to_center = y_bottom - image_center
-
-    # compute curvature at some point x
-    # now, point x is in the middle (from height) of the lane centerline
-    x_mid = np.int(x_fitted[int(number_points_for_poly_fit / 2)])
-    y_mid = np.int(y_mid_fitted[int(number_points_for_poly_fit / 2)])
-    distance_at_mid = y_mid - image_center
-    radian_to_center = ms.radian(distance_at_mid, image_center)
-    curvature_at_mid = ms.curvature(w_mid, x_mid, 2)
-
-    return w_left, w_right, w_mid, distance_to_center, distance_at_mid, radian_to_center, curvature_at_mid
-
-
-def plot_lines(image, pts_left, pts_right):
-    cv2.polylines(image, [pts_left], False, (0, 255, 255), 1)
-    cv2.polylines(image, [pts_right], False, (0, 255, 255), 1)
-    return cv2.resize(image, (0,0), fx=6, fy=6)
-    # return image
-
-
-def mark_images_from(ori_path, dest_path):
-    image_paths = glob(os.path.join(ori_path, '*.png'))
-    image_paths.sort(key=util.filename_key)
-    for i in range(len(image_paths)):
-        image = cv2.imread(image_paths[i])
-        image, pts_left, pts_right = fit_image(image)
-        marked_image = plot_lines(image, pts_left, pts_right)
-        cv2.imwrite(join(dest_path, str(i + 1) + '.png'), marked_image)
-
+def unit_test():
+    pass
 
 if __name__ == '__main__':
-    mark_images_from('./images/', './output/')
+    unit_test()
+#     mark_images_from('./images/', './output/')
