@@ -17,7 +17,7 @@ import util.math_support as ms
 
 class Controller(object):
     def __init__(self):
-        self.init_q_learning()
+        self.init_memory()
         self.init_gpio()
 
     def init_gpio(self):
@@ -48,7 +48,7 @@ class Controller(object):
         sleep(1)
         print ('GPIO INITIALIZED')
 
-    def init_q_learning(self):
+    def init_memory(self):
         go_straight_00 = np.array([50, 60])
         go_straight_01 = np.array([40, 50])
         go_straight_02 = np.array([60, 70])
@@ -72,12 +72,9 @@ class Controller(object):
         #  threshold in pixels
         self.distance_threshold = 3
 
-        # epsilon greedy: epsilon% to choose random action
-        self.epsilon_greedy = 0.
-
         # suppose we have 5 states to store: distance_to_center, distance_at_mid, first_order_derivative_at_x, intercept, curvature
-        ##dim_state = 5
-        self.dim_state = 3
+        # dim_state = 5
+        dim_state = 3
 
         # threshold_distance_error determines if the distances_to_center is corrupted/wrongly measured
         self.threshold_distance_error = 50
@@ -127,18 +124,10 @@ class Controller(object):
     def make_decisiton(self, distance_to_center, distance_at_mid, curvature_at_x):
         state = np.array([distance_to_center, distance_at_mid, curvature_at_x])
         K_mid = 6
-        differential_drive = -K_mid*distance_at_mid
+        differential_drive = -K_mid * distance_at_mid
 
         pwm_mid = 50
-        pwm_l_new = np.clip(pwm_mid - differential_drive/2, 0, 100.0)
-        pwm_r_new = np.clip(pwm_mid + differential_drive/2, 0, 100.0)
+        pwm_l_new = np.clip(pwm_mid - differential_drive / 2, 0, 100.0)
+        pwm_r_new = np.clip(pwm_mid + differential_drive / 2, 0, 100.0)
         self.memory[self.memory_counter, :] = np.hstack([state, differential_drive])
         self.memory_counter += 1
-
-# load learned weights
-## w = np.load('learned_weights_even_0725.npy')
-## w_matrix = w.reshape((9,6))
-# def choose_action_from_policy_w(x):
-#     q_values = np.matmul(w_matrix, x)
-#     chosen_action_number = np.argmax(q_values)
-#     return chosen_action_number
