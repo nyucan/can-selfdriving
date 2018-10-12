@@ -3,4 +3,5 @@ dateset/
 models/
 logs/
 comm/
+test-output/
 *.pyc

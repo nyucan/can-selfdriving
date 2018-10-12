@@ -5,7 +5,6 @@ from glob import glob
 import time
 import numpy as np
 import cv2
-import pickle
 
 from fcn.fcn import Fcn
 from util import detect
@@ -23,6 +22,7 @@ testing_pred_dir = join('.', 'data', 'testing', 'predict')
 checkpoint_path = join('.', 'models')
 log_path = join('.', 'logs')
 model_path = join('.', 'models')
+
 
 class Predictior(object):
     def __init__(self, model_name):

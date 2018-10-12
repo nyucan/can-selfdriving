@@ -1,5 +1,4 @@
 # python 2.7
-
 import cv2
 import numpy as np
 
@@ -74,15 +73,15 @@ class Detector(object):
         lane_center_left, lane_center_right = self.find_lane_centers(laneIMG_binary)
 
         w_left, w_right, w_mid = np.zeros(3), np.zeros(3), np.zeros(3)
-        x_left, y_left = self.find_pixels_of_lane(laneIMG_binary, lane_center_left, window_size, IMG_WIDTH)
-        x_right, y_right = self.find_pixels_of_lane(laneIMG_binary, lane_center_right, window_size, IMG_WIDTH)
+        x_left, y_left = self.find_pixels_of_lane(laneIMG_binary, lane_center_left, WINDOW_SIZE, IMG_WIDTH)
+        x_right, y_right = self.find_pixels_of_lane(laneIMG_binary, lane_center_right, WINDOW_SIZE, IMG_WIDTH)
 
         if (lane_center_left is None and lane_center_right is None):
             print('Detect: End of the trial: No lines')
             # return [0 ... 0]
             return  w_left, w_right, w_mid
         else:
-            if (lane_center_left is not None):
+            if lane_center_left is not None:
                 w_right = self.w_right_previous
                 try:
                     w_left = np.polyfit(x_left, y_left, POLY_ORDER)
@@ -92,7 +91,7 @@ class Detector(object):
                 except np.RankWarning:
                     print('Detector: Rank Warning!!!')
                     w_left = self.w_left_previous
-            if (lane_center_right is not None):
+            if lane_center_right is not None:
                 w_left = self.w_left_previous
                 try:
                     w_right = np.polyfit(x_right, y_right, POLY_ORDER)
@@ -102,7 +101,7 @@ class Detector(object):
                 except np.RankWarning:
                     print('Detector: Rank Warning!!!')
                     w_right = self.w_right_previous
-            if (lane_center_left is not None and lane_center_right is not None)
+            if lane_center_left is not None and lane_center_right is not None:
                 w_mid = (w_left + w_right) / 2
 
         return w_left, w_right, w_mid
@@ -172,6 +171,8 @@ class Detector(object):
         return x, y
 
     def crop_image(self, img, lower_bound, upper_bound):
+        """ Crop an image with lower and upper bound.
+        """
         img_cropped = img[int(img.shape[0]*lower_bound):int(img.shape[0]*upper_bound),:]
         return img_cropped
 
@@ -182,10 +183,36 @@ class Detector(object):
         return laneIMG
 
     def plot_lines(self, image, pts_left, pts_right):
+        """ Plot fitting lines on an image.
+        """
         cv2.polylines(image, [pts_left], False, (0, 255, 255), 1)
         cv2.polylines(image, [pts_right], False, (0, 255, 255), 1)
         return cv2.resize(image, (0,0), fx=6, fy=6)
 
+    def calc_fitting_pts(self, w, x):
+        poly_fit = np.poly1d(w)
+        y_fitted = poly_fit(x)
+        return y_fitted
+
+    def mark_image_with_parameters(self, img, parameters):
+        """ Fit the image.
+            @returns
+                res_img: image with the fitting line
+        """
+        w_l, w_r, w_m = parameters[0:3], parameters[3:6], parameters[6:9]
+        x = np.linspace(0, IMG_HEIGHT, NUMBER_OF_POINTS)
+        pts_list = []
+        for cur_w in [w_l, w_r, w_m]:
+            pts = np.array([self.calc_fitting_pts(cur_w, x), x], np.int32).transpose()
+            pts_list.append(pts)
+        print(pts_list[0].shape)
+        cv2.polylines(img, [pts_list[0]], False, (0,255,255), 1)
+        cv2.polylines(img, [pts_list[1]], False, (0,255,255), 1)
+        cv2.polylines(img, [pts_list[2]], False, (0,255,0), 1)
+        return img
+
+    def visualization(self, img):
+        cv2.imshow('fitted image', img)
 
 # def mark_images_from(ori_path, dest_path):
 #     image_paths = glob(os.path.join(ori_path, '*.png'))
@@ -195,10 +222,3 @@ class Detector(object):
 #         image, pts_left, pts_right = fit_image(image)
 #         marked_image = plot_lines(image, pts_left, pts_right)
 #         cv2.imwrite(join(dest_path, str(i + 1) + '.png'), marked_image)
-
-def unit_test():
-    pass
-
-if __name__ == '__main__':
-    unit_test()
-#     mark_images_from('./images/', './output/')
