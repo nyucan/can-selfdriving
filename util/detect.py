@@ -24,9 +24,7 @@ LENGTH_OF_TANGENT_LINE = 20
 NUMBER_OF_POINTS = 48
 POLY_ORDER = 2
 
-##  --- previous information --- ##
-# initialize the lane_peaks_previous
-## ----------------------------- ##
+
 class Detector(object):
     def __init__(self):
         # initialize the lane_peaks_previous
@@ -68,7 +66,7 @@ class Detector(object):
                 w_right:               np.array
                 w_mid:                 np.array
         """
-        laneIMG = self.lane_filter(image, LOW_LANE_COLOR, UPPER_LANE_COLOR)
+        laneIMG = Detector.lane_filter(image, LOW_LANE_COLOR, UPPER_LANE_COLOR)
         laneIMG_binary = laneIMG / 255
         lane_center_left, lane_center_right = self.find_lane_centers(laneIMG_binary)
 
@@ -159,7 +157,8 @@ class Detector(object):
         wrapped_parameters = np.concatenate((wrapped_parameters, w_l, w_r, w_m, [dc, dm, r, c]))
         return wrapped_parameters
 
-    def find_pixels_of_lane(self, laneIMG_binary, lane_center, window_size, width_of_laneIMG_binary):
+    @classmethod
+    def find_pixels_of_lane(cls, laneIMG_binary, lane_center, window_size, width_of_laneIMG_binary):
         """ Find pixels/indices of one of the left and the right lane
             need to call twice, one for left line, and the other for right lane
         """
@@ -170,31 +169,36 @@ class Detector(object):
         y = indices_nonzero[1] + np.max([0, lane_center - window_size])
         return x, y
 
-    def crop_image(self, img, lower_bound, upper_bound):
+    @classmethod
+    def crop_image(cls, img, lower_bound, upper_bound):
         """ Crop an image with lower and upper bound.
         """
         img_cropped = img[int(img.shape[0]*lower_bound):int(img.shape[0]*upper_bound),:]
         return img_cropped
 
-    def lane_filter(self, img, lower_lane_color, upper_lane_color):
+    @classmethod
+    def lane_filter(cls, img, lower_lane_color, upper_lane_color):
         """ Use color filter to show lanes in the image.
         """
         laneIMG = cv2.inRange(img, lower_lane_color, upper_lane_color)
         return laneIMG
 
-    def plot_lines(self, image, pts_left, pts_right):
+    @classmethod
+    def plot_lines(cls, image, pts_left, pts_right):
         """ Plot fitting lines on an image.
         """
         cv2.polylines(image, [pts_left], False, (0, 255, 255), 1)
         cv2.polylines(image, [pts_right], False, (0, 255, 255), 1)
         return cv2.resize(image, (0,0), fx=6, fy=6)
 
-    def calc_fitting_pts(self, w, x):
+    @classmethod
+    def calc_fitting_pts(cls, w, x):
         poly_fit = np.poly1d(w)
         y_fitted = poly_fit(x)
         return y_fitted
 
-    def mark_image_with_parameters(self, img, parameters):
+    @classmethod
+    def mark_image_with_parameters(cls, img, parameters):
         """ Fit the image.
             @returns
                 res_img: image with the fitting line
@@ -203,7 +207,7 @@ class Detector(object):
         x = np.linspace(0, IMG_HEIGHT, NUMBER_OF_POINTS)
         pts_list = []
         for cur_w in [w_l, w_r, w_m]:
-            pts = np.array([self.calc_fitting_pts(cur_w, x), x], np.int32).transpose()
+            pts = np.array([cls.calc_fitting_pts(cur_w, x), x], np.int32).transpose()
             pts_list.append(pts)
         print(pts_list[0].shape)
         cv2.polylines(img, [pts_list[0]], False, (0,255,255), 1)
@@ -211,7 +215,9 @@ class Detector(object):
         cv2.polylines(img, [pts_list[2]], False, (0,255,0), 1)
         return img
 
-    def visualization(self, img):
+    @classmethod
+    def visualization(cls, img):
+        show_img = cv2.resize(img, (0,0), fx=6, fy=6)
         cv2.imshow('fitted image', img)
 
 # def mark_images_from(ori_path, dest_path):

@@ -1,52 +1,18 @@
 # python 2.7
 from __future__ import absolute_import, division, print_function
-from os.path import join
 import io
-import sys
-import picamera
 import numpy as np
 import cv2
-import RPi.GPIO as GPIO
-from PIL import Image
 from time import sleep
 from os.path import join
 
-from util.detect_peaks import detect_peaks
-import util.math_support as ms
+from control.motor import Motor
 
 
 class Controller(object):
     def __init__(self):
+        self.motor = Motor()
         self.init_memory()
-        self.init_gpio()
-
-    def init_gpio(self):
-        GPIO.setmode(GPIO.BCM)
-        ENA, ENB = 26, 11
-        IN1, IN2, IN3, IN4 = 19, 13, 6, 5
-        sleep(1)
-
-        #  Motor Pins
-        GPIO.setup(ENA, GPIO.OUT) # ENA
-        GPIO.setup(ENB, GPIO.OUT) # ENB
-        GPIO.setup(IN1, GPIO.OUT) # IN1
-        GPIO.setup(IN2, GPIO.OUT) # IN2
-        GPIO.setup(IN3, GPIO.OUT) # IN3
-        GPIO.setup(IN4, GPIO.OUT) # IN4
-
-        # PWM pin and Frequency
-        self.pwmR = GPIO.PWM(26, 100)
-        self.pwmL = GPIO.PWM(11, 100)
-        self.pwmR.start(0)
-        self.pwmL.start(0)
-        sleep(1)
-
-        GPIO.output(19, GPIO.HIGH)
-        GPIO.output(13, GPIO.LOW)
-        GPIO.output(6, GPIO.HIGH)
-        GPIO.output(5, GPIO.LOW)
-        sleep(1)
-        print ('GPIO INITIALIZED')
 
     def init_memory(self):
         go_straight_00 = np.array([50, 60])
@@ -84,20 +50,9 @@ class Controller(object):
         self.memory_counter = 0
         self.memory = np.zeros((memory_size, dim_state + 1))
 
-    def motor_startup(self):
-        self.pwmR.ChangeDutyCycle(60)
-        self.pwmL.ChangeDutyCycle(50)
-
-    def motor_stop(self):
-        self.pwmR.stop()
-        self.pwmL.stop()
+    def finish_control(self):
+        self.motor.motor_stop()
         np.save(join('.', 'q-models', 'memory_'), self.memory)
-        GPIO.cleanup()
-
-    def motor_set_new_speed(self, left, right):
-        self.pwmL.ChangeDutyCycle(left)
-        self.pwmR.ChangeDutyCycle(right)
-        print('Controller: ', 'pwm_l_new', pwm_l_new, 'pwm_r_new', pwm_r_new)
 
     def choose_action_using_simple_logic(self, distance_to_center):
         """ Naive policy to achive lane keeping, using simple rules.
@@ -121,7 +76,9 @@ class Controller(object):
         feature_sub = np.hstack((np.eye(1), s, s**2,[s[:,0]*s[:,1]])).transpose()
         return feature_sub
 
-    def make_decisiton(self, distance_to_center, distance_at_mid, curvature_at_x):
+    def make_decision(self, distance_to_center, distance_at_mid, curvature_at_x):
+        """ Make decision with a list of parameters.
+        """
         state = np.array([distance_to_center, distance_at_mid, curvature_at_x])
         K_mid = 6
         differential_drive = -K_mid * distance_at_mid
@@ -131,3 +88,4 @@ class Controller(object):
         pwm_r_new = np.clip(pwm_mid + differential_drive / 2, 0, 100.0)
         self.memory[self.memory_counter, :] = np.hstack([state, differential_drive])
         self.memory_counter += 1
+        self.motor.motor_set_new_speed(pwm_l_new, pwm_r_new)

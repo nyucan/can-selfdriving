@@ -101,7 +101,7 @@ def unpackage_paras(buffer):
 def make_decisiton_with(dc, dm, cur, stop_signal, contorller):
     if stop_signal:
         # stop the car!
-        contorller.motor_stop()
+        contorller.finish_control()
     else:
         contorller.make_decisiton(dc, dm, cur)
         # both sides were detected
@@ -117,7 +117,7 @@ def main():
 
     # setup motor
     contorller = Controller()
-    contorller.motor_startup()
+    contorller.motor.motor_startup()
 
     # create threads
     send_img_thread = threading.Thread(target=send_img, args=(cs,))
