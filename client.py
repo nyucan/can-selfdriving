@@ -37,14 +37,15 @@ class Client(object):
         pass
 
 
-def send_img(cs):
+def send_img(cs, contorller):
     connection = cs.makefile('wb')
     print('client: sending images')
     try:
         output = SplitFrames(connection)
         # with picamera.PiCamera(resolution='VGA', framerate=30) as camera:
         with picamera.PiCamera(resolution='VGA', framerate=30) as camera:
-            time.sleep(2)
+            time.sleep(1)
+            contorller.motor.motor_startup()
             camera.start_recording(output, format='mjpeg')
             camera.wait_recording(10)
             camera.stop_recording()
@@ -62,7 +63,6 @@ def recv_data(s, contorller):
     """
     print('client: ready to recv data')
     pre_img_id = -1
-    contorller.motor.motor_startup()
     while (True):
         # try:
         buffer = s.recv(2048)
@@ -122,7 +122,7 @@ def main():
 
     # try:
     # create threads
-    send_img_thread = threading.Thread(target=send_img, args=(cs,))
+    send_img_thread = threading.Thread(target=send_img, args=(cs, contorller,))
     recv_data_thread = threading.Thread(target=recv_data, args=(cs, contorller,))
 
     # start all threads
