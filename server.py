@@ -2,18 +2,17 @@
 import io
 import socket
 import struct
-# import pickle
 import numpy as np
 import cv2
 from PIL import Image
 
-import recipe
+from fcn.predict import Predictor
 from util.detect import Detector
 
 
 class Server(object):
     def __init__(self, model):
-        self.predictor = recipe.Predictior(model)
+        self.predictor = Predictor(model)
         self.detector = Detector()
         self.server = socket.socket()
         self.server.bind(('0.0.0.0', 8888))
@@ -38,8 +37,10 @@ class Server(object):
         image_stream.seek(0)
         image = Image.open(image_stream).convert('RGB')
         open_cv_image = np.array(image)
-        open_cv_image = cv2.resize(open_cv_image, (220, 160))
-        open_cv_image = open_cv_image[60:108, 30:190]
+        # open_cv_image = cv2.resize(open_cv_image, (220, 160))
+        # open_cv_image = open_cv_image[100:148, 30:190]
+        open_cv_image = Server.crop_image(open_cv_image, 0.4, 0.8)
+        open_cv_image = cv2.resize(open_cv_image, (160, 48), interpolation=cv2.INTER_LINEAR)
         return open_cv_image
 
     def listen(self):
@@ -50,31 +51,46 @@ class Server(object):
                 new_img = self.recv_images()
                 if (new_img is None):
                     break
-                cv2.imwrite('./comm/' + str(image_id) + '.png', new_img)
-                print('transmited image ' + str(image_id))
-                packaged_parameters = self.predict_and_fit(new_img)
+
+                print('Server: transmited image ' + str(image_id))
+                packaged_parameters = self.predict_and_fit(image_id, new_img)
+                print('Server: predicted and fitted image ' + str(image_id))
+
                 packaged_parameters_with_id = np.concatenate(([image_id], packaged_parameters))
                 s_packaged_parameters = packaged_parameters_with_id.tobytes()
                 self.s.sendall(s_packaged_parameters)
                 image_id = image_id + 1
-        except:
-            print('closed by thread')
+        # except:
+        #     print('closed by thread')
         finally:
             self.close_connection()
             print('connection closed')
 
-    def predict_and_fit(self, image):
+    def predict_and_fit(self, imageId, image):
         """ Make prediction and then fit the predicted image.
             @return: image, left_parameters, left_parameters
         """
+        cv2.imwrite('./comm/1/' + str(imageId) + '.png', image)
+        # predict
         predicted_img = self.predictor.predict(image)
+        cv2.imwrite('./comm/2/' + str(imageId) + '.png', predicted_img)
+
+        # fit
         wrapped_parameters = self.detector.get_wrapped_all_parameters(predicted_img)
-        # wrapped_parameters = recipe.get_fitting_parameters(predicted_img)
+        debug_img = Detector.mark_image_with_parameters(predicted_img, wrapped_parameters)
+        cv2.imwrite('./comm/3/' + str(imageId) + '.png', debug_img)
         return wrapped_parameters
 
     def close_connection(self):
         self.connection.close()
         self.server.close()
+
+    @classmethod
+    def crop_image(cls, img, lower_bound, upper_bound):
+        """ Crop an image with lower and upper bound.
+        """
+        img_cropped = img[int(img.shape[0]*lower_bound):int(img.shape[0]*upper_bound),:]
+        return img_cropped
 
 
 if __name__ == '__main__':

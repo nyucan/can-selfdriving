@@ -51,6 +51,7 @@ class Controller(object):
         self.memory = np.zeros((memory_size, dim_state + 1))
 
     def finish_control(self):
+        print('contorller: stop')
         self.motor.motor_stop()
         np.save(join('.', 'q-models', 'memory_'), self.memory)
 

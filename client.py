@@ -8,7 +8,7 @@ import numpy as np
 import cv2
 from os.path import join
 
-from controller import Controller
+from control.controller import Controller
 
 
 class SplitFrames(object):
@@ -39,11 +39,11 @@ class Client(object):
 
 def send_img(cs):
     connection = cs.makefile('wb')
-    print('ready to send images')
+    print('client: sending images')
     try:
         output = SplitFrames(connection)
         # with picamera.PiCamera(resolution='VGA', framerate=30) as camera:
-        with picamera.PiCamera(resolution=(220, 160), framerate=30) as camera:
+        with picamera.PiCamera(resolution='VGA', framerate=30) as camera:
             time.sleep(2)
             camera.start_recording(output, format='mjpeg')
             camera.wait_recording(10)
@@ -60,22 +60,23 @@ def send_img(cs):
 def recv_data(s, contorller):
     """Wait for results from the server.
     """
+    print('client: ready to recv data')
     pre_img_id = -1
+    contorller.motor.motor_startup()
     while (True):
-        try:
-            buffer = s.recv(2048)
-            if (buffer is not None):
-                img_id, dc, dm, cur, signal = unpackage_paras(buffer)
-                if img_id <= pre_img_id:
-                    # outdate data
-                    continue
-                print('Received: ' + str(img_id))
-                make_decisiton_with(dc, dm, cur, signal, contorller)
-                pre_img_id = img_id  # update
-                # TODO
-        except:
-            print('thread: recv data finish')
-            break
+        # try:
+        buffer = s.recv(2048)
+        if (buffer is not None):
+            img_id, dc, dm, cur, signal = unpackage_paras(buffer)
+            print('Received: ' + str(img_id))
+            if img_id <= pre_img_id:
+                # outdate data
+                continue
+            make_decisiton_with(dc, dm, cur, signal, contorller)
+            pre_img_id = img_id  # update
+        # except:
+        #     print('thread: recv data finish')
+        #     break
 
 
 def unpackage_paras(buffer):
@@ -99,11 +100,12 @@ def unpackage_paras(buffer):
 
 
 def make_decisiton_with(dc, dm, cur, stop_signal, contorller):
+    print('making desicion with ', dc, dm, cur ,str(stop_signal))
     if stop_signal:
         # stop the car!
         contorller.finish_control()
     else:
-        contorller.make_decisiton(dc, dm, cur)
+        contorller.make_decision(dc, dm, cur)
         # both sides were detected
 
 
@@ -115,10 +117,10 @@ def main():
     cs = socket.socket()
     cs.connect(('192.168.20.104', 8888))
 
-    # setup motor
+    # setup controller
     contorller = Controller()
-    contorller.motor.motor_startup()
 
+    # try:
     # create threads
     send_img_thread = threading.Thread(target=send_img, args=(cs,))
     recv_data_thread = threading.Thread(target=recv_data, args=(cs, contorller,))
@@ -126,6 +128,8 @@ def main():
     # start all threads
     send_img_thread.start()
     recv_data_thread.start()
+    # except:
+    #     contorller.motor.motor_stop()
 
 
 if __name__ == '__main__':

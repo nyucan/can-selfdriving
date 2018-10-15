@@ -6,7 +6,7 @@ import cv2
 from fcn.predict import Predictor
 from fcn.trainer import Trainer
 from util.detect import Detector
-from control.controller import Controller
+# from control.controller import Controller
 
 
 def test_predictor(img):
@@ -23,7 +23,7 @@ def test_detector(img):
 
 
 def test_predictor_and_detector():
-    test_img = util.get_an_image_from(join('.', 'data', 'testing', 'image', '0.png'))
+    test_img = util.get_an_image_from(join('.', 'comm', '1', '0.png'))
     p_img = test_predictor(test_img)
     d_img = test_detector(p_img)
 
@@ -38,22 +38,22 @@ def test_trainer():
     nn = Trainer.train_nn_from_sketch()
 
 
-def test_controller():
-    cont = Controller()
-    cont.motor_startup()
-    sleep(5)
-    cont.motor_set_new_speed(60, 30) # turn right
-    sleep(5)
-    cont.motor_set_new_speed(30, 60) # turn left
-    sleep(5)
-    cont.motor_stop()
+# def test_controller():
+#     cont = Controller()
+#     cont.motor.motor_startup()
+#     sleep(2)
+#     cont.motor.motor_set_new_speed(80, 30) # turn right
+#     sleep(5)
+#     cont.motor.motor_set_new_speed(30, 80) # turn left
+#     sleep(2)
+#     cont.motor.motor_stop()
 
 
 def main():
     ## 1. Trainer
     # test_trainer()
     ## 2. Predictor and Detector
-    # test_predictor_and_detector()
+    test_predictor_and_detector()
     ## 3. Controller
     # test_controller()
     # sleep(5)

@@ -15,7 +15,7 @@ LANE_COLOR = np.uint8([[[0,0,0]]])
 LOW_LANE_COLOR, UPPER_LANE_COLOR = LANE_COLOR, LANE_COLOR + 20
 IMG_HEIGHT, IMG_WIDTH = 48, 160
 IMAGE_CENTER = np.int(IMG_WIDTH / 2)
-PEAK_DISTANCE = 55
+PEAK_DISTANCE = 40
 WINDOW_SIZE = int(PEAK_DISTANCE / 2)
 # this number determines how long the tangent line is (in pixel)
 LENGTH_OF_TANGENT_LINE = 20
@@ -70,17 +70,15 @@ class Detector(object):
         laneIMG_binary = laneIMG / 255
         lane_center_left, lane_center_right = self.find_lane_centers(laneIMG_binary)
 
-        w_left, w_right, w_mid = np.zeros(3), np.zeros(3), np.zeros(3)
-        x_left, y_left = self.find_pixels_of_lane(laneIMG_binary, lane_center_left, WINDOW_SIZE, IMG_WIDTH)
-        x_right, y_right = self.find_pixels_of_lane(laneIMG_binary, lane_center_right, WINDOW_SIZE, IMG_WIDTH)
+        w_left, w_right, w_mid = self.w_left_previous, self.w_right_previous, np.zeros(3)
 
         if (lane_center_left is None and lane_center_right is None):
             print('Detect: End of the trial: No lines')
             # return [0 ... 0]
-            return  w_left, w_right, w_mid
+            return  np.zeros(3), np.zeros(3), np.zeros(3)
         else:
             if lane_center_left is not None:
-                w_right = self.w_right_previous
+                x_left, y_left = Detector.find_pixels_of_lane(laneIMG_binary, lane_center_left, WINDOW_SIZE, IMG_WIDTH)
                 try:
                     w_left = np.polyfit(x_left, y_left, POLY_ORDER)
                     self.w_left_previous = w_left
@@ -90,7 +88,7 @@ class Detector(object):
                     print('Detector: Rank Warning!!!')
                     w_left = self.w_left_previous
             if lane_center_right is not None:
-                w_left = self.w_left_previous
+                x_right, y_right = Detector.find_pixels_of_lane(laneIMG_binary, lane_center_right, WINDOW_SIZE, IMG_WIDTH)
                 try:
                     w_right = np.polyfit(x_right, y_right, POLY_ORDER)
                     self.w_right_previous = w_right
@@ -99,9 +97,8 @@ class Detector(object):
                 except np.RankWarning:
                     print('Detector: Rank Warning!!!')
                     w_right = self.w_right_previous
-            if lane_center_left is not None and lane_center_right is not None:
-                w_mid = (w_left + w_right) / 2
-
+            # if lane_center_left is not None and lane_center_right is not None:
+            w_mid = (w_left + w_right) / 2
         return w_left, w_right, w_mid
 
     def get_all_parameters(self, image):
@@ -170,13 +167,6 @@ class Detector(object):
         return x, y
 
     @classmethod
-    def crop_image(cls, img, lower_bound, upper_bound):
-        """ Crop an image with lower and upper bound.
-        """
-        img_cropped = img[int(img.shape[0]*lower_bound):int(img.shape[0]*upper_bound),:]
-        return img_cropped
-
-    @classmethod
     def lane_filter(cls, img, lower_lane_color, upper_lane_color):
         """ Use color filter to show lanes in the image.
         """
@@ -209,7 +199,6 @@ class Detector(object):
         for cur_w in [w_l, w_r, w_m]:
             pts = np.array([cls.calc_fitting_pts(cur_w, x), x], np.int32).transpose()
             pts_list.append(pts)
-        print(pts_list[0].shape)
         cv2.polylines(img, [pts_list[0]], False, (0,255,255), 1)
         cv2.polylines(img, [pts_list[1]], False, (0,255,255), 1)
         cv2.polylines(img, [pts_list[2]], False, (0,255,0), 1)
@@ -219,12 +208,3 @@ class Detector(object):
     def visualization(cls, img):
         show_img = cv2.resize(img, (0,0), fx=6, fy=6)
         cv2.imshow('fitted image', img)
-
-# def mark_images_from(ori_path, dest_path):
-#     image_paths = glob(os.path.join(ori_path, '*.png'))
-#     image_paths.sort(key=util.filename_key)
-#     for i in range(len(image_paths)):
-#         image = cv2.imread(image_paths[i])
-#         image, pts_left, pts_right = fit_image(image)
-#         marked_image = plot_lines(image, pts_left, pts_right)
-#         cv2.imwrite(join(dest_path, str(i + 1) + '.png'), marked_image)

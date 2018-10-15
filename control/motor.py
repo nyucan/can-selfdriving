@@ -1,7 +1,9 @@
 import RPi.GPIO as GPIO
+from time import sleep
+
 
 class Motor(object):
-    def __init__():
+    def __init__(self):
         """ Set up GPIO environment.
         """
         GPIO.setmode(GPIO.BCM)
