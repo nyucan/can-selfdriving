@@ -15,8 +15,8 @@ LANE_COLOR = np.uint8([[[0,0,0]]])
 LOW_LANE_COLOR, UPPER_LANE_COLOR = LANE_COLOR, LANE_COLOR + 20
 IMG_HEIGHT, IMG_WIDTH = 48, 160
 IMAGE_CENTER = np.int(IMG_WIDTH / 2)
-PEAK_DISTANCE = 55
-WINDOW_SIZE = int(PEAK_DISTANCE / 2)
+PEAK_DISTANCE = 70
+WINDOW_SIZE = int(PEAK_DISTANCE / 2) + 10
 # this number determines how long the tangent line is (in pixel)
 LENGTH_OF_TANGENT_LINE = 20
 
@@ -56,7 +56,10 @@ class Detector(object):
             peaks = peaks[:2]
             lane_center_left = peaks[0]
             lane_center_right = peaks[1]
-        self.left_peak_previous, self.right_peak_previous = lane_center_left, lane_center_right
+        if self.left_peak_previous is not None:
+            self.left_peak_previous = lane_center_left
+        if self.right_peak_previous is not None:
+            self.right_peak_previous = lane_center_right
         return lane_center_left, lane_center_right
 
     def calc_fitting_weights(self, image):

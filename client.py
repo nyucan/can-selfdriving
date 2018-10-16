@@ -43,7 +43,7 @@ def send_img(cs, contorller):
     try:
         output = SplitFrames(connection)
         # with picamera.PiCamera(resolution='VGA', framerate=30) as camera:
-        with picamera.PiCamera(resolution='VGA', framerate=30) as camera:
+        with picamera.PiCamera(resolution=(160, 120), framerate=30) as camera:
             time.sleep(1)
             contorller.motor.motor_startup()
             camera.start_recording(output, format='mjpeg')

@@ -40,8 +40,9 @@ class Server(object):
         # open_cv_image = cv2.resize(open_cv_image, (220, 160))
         # open_cv_image = open_cv_image[100:148, 30:190]
         cv2.imwrite('./comm/' + 'ori.png', open_cv_image)
-        open_cv_image = Server.crop_image(open_cv_image, 0.3, 0.7)
+        open_cv_image = Server.crop_image(open_cv_image, 0.25, 0.55)
         open_cv_image = cv2.resize(open_cv_image, (160, 48), interpolation=cv2.INTER_LINEAR)
+        cv2.imwrite('./comm/' + 'ori-2.png', open_cv_image)
         return open_cv_image
 
     def listen(self):
