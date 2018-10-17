@@ -81,7 +81,7 @@ class Controller(object):
         """ Make decision with a list of parameters.
         """
         state = np.array([distance_to_center, distance_at_mid, curvature_at_x])
-        K_mid = 6
+        K_mid = 8
         differential_drive = -K_mid * distance_at_mid
 
         pwm_mid = 50
@@ -90,3 +90,9 @@ class Controller(object):
         self.memory[self.memory_counter, :] = np.hstack([state, differential_drive])
         self.memory_counter += 1
         self.motor.motor_set_new_speed(pwm_l_new, pwm_r_new)
+
+    def start(self):
+        self.motor.motor_startup()
+
+    def cleanup(self):
+        self.motor.motor_cleanup()

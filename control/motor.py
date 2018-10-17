@@ -34,15 +34,17 @@ class Motor(object):
         print ('GPIO INITIALIZED')
 
     def motor_startup(self):
-        self.pwmR.ChangeDutyCycle(30)
-        self.pwmL.ChangeDutyCycle(20)
+        self.pwmL.ChangeDutyCycle(60)
+        self.pwmR.ChangeDutyCycle(45)
 
     def motor_stop(self):
-        self.pwmR.stop()
         self.pwmL.stop()
-        GPIO.cleanup()
+        self.pwmR.stop()
 
     def motor_set_new_speed(self, left, right):
         self.pwmL.ChangeDutyCycle(left)
         self.pwmR.ChangeDutyCycle(right)
-        # print('Controller: ', 'pwm_l_new', left, 'pwm_r_new', right)
+        print('Motor: ', 'pwm_l_new', left, 'pwm_r_new', right)
+
+    def motor_cleanup(self):
+        GPIO.cleanup()

@@ -59,41 +59,48 @@ def send_img(cs, contorller):
 
 
 def recv_data(s, contorller):
-    """Wait for results from the server.
+    """ Wait for results from the server.
     """
     print('client: ready to recv data')
     pre_img_id = -1
     while (True):
-        # try:
-        buffer = s.recv(2048)
-        if (buffer is not None):
-            img_id, dc, dm, cur, signal = unpackage_paras(buffer)
-            print('Received: ' + str(img_id))
-            if img_id <= pre_img_id:
-                # outdate data
-                continue
-            make_decisiton_with(dc, dm, cur, signal, contorller)
-            pre_img_id = img_id  # update
-        # except:
-        #     print('thread: recv data finish')
-        #     break
+        try:
+            buffer = s.recv(1024)
+            if (buffer is not None):
+                img_id, dc, dm, cur, signal = unpackage_paras(buffer)
+                print('Received: ' + str(img_id))
+                if img_id <= pre_img_id:
+                    # outdate data
+                    continue
+                make_decisiton_with(dc, dm, cur, signal, contorller)
+                pre_img_id = img_id  # update
+        except:
+            print('thread: error happened in recv_data')
+            contorller.finish_control()
+            break
 
 
 def unpackage_paras(buffer):
     """ Unpackage the parameters from buffer.
+        @Paras:
+            buffer: str
+                The recv buffer.
+                Note that the default recv size should be 112 (np.array(13, dtype=float64))
         @Returns:
             image_id
             distance_to_center
     """
-    packaged_parameters = np.frombuffer(buffer, dtype=np.float64).reshape(14)
-    image_id = int(packaged_parameters[0])
-    w_left = packaged_parameters[1:4]
-    w_right = packaged_parameters[4:7]
-    w_middle = packaged_parameters[7:10]
-    distance_to_center = packaged_parameters[10]
-    distance_at_middle = packaged_parameters[11]
-    radian = packaged_parameters[12]
-    curvature = packaged_parameters[13]
+    num_of_paras = len(buffer) / 112
+    packaged_parameters = np.frombuffer(buffer, dtype=np.float64).reshape(14 * num_of_paras)
+    cur_paras = packaged_parameters[0:14]
+    image_id = int(cur_paras[0])
+    w_left = cur_paras[1:4]
+    w_right = cur_paras[4:7]
+    w_middle = cur_paras[7:10]
+    distance_to_center = cur_paras[10]
+    distance_at_middle = cur_paras[11]
+    radian = cur_paras[12]
+    curvature = cur_paras[13]
 
     stop_signal = (np.all(w_left == np.zeros(3)) and np.all(w_right == np.zeros(3)))
     return image_id, distance_to_center, distance_at_middle, curvature, stop_signal
@@ -106,7 +113,6 @@ def make_decisiton_with(dc, dm, cur, stop_signal, contorller):
         contorller.finish_control()
     else:
         contorller.make_decision(dc, dm, cur)
-        # both sides were detected
 
 
 def main():
@@ -128,8 +134,11 @@ def main():
     # start all threads
     send_img_thread.start()
     recv_data_thread.start()
-    # except:
-    #     contorller.motor.motor_stop()
+
+    send_img_thread.join()
+    recv_data_thread.join()
+    print('--------- finish ---------')
+    contorller.cleanup()
 
 
 if __name__ == '__main__':

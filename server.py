@@ -4,6 +4,7 @@ import socket
 import struct
 import numpy as np
 import cv2
+from time import sleep
 from PIL import Image
 
 from fcn.predict import Predictor
@@ -30,6 +31,7 @@ class Server(object):
         """
         image_len = struct.unpack('<L', self.connection.read(struct.calcsize('<L')))[0]
         if not image_len:
+            print('server: receive None')
             return None
         # Construct a stream to hold the image data and read the image data from the connection
         image_stream = io.BytesIO()
@@ -37,10 +39,9 @@ class Server(object):
         image_stream.seek(0)
         image = Image.open(image_stream).convert('RGB')
         open_cv_image = np.array(image)
-        # open_cv_image = cv2.resize(open_cv_image, (220, 160))
-        # open_cv_image = open_cv_image[100:148, 30:190]
         cv2.imwrite('./comm/' + 'ori.png', open_cv_image)
-        open_cv_image = Server.crop_image(open_cv_image, 0.25, 0.55)
+        open_cv_image = Server.crop_image(open_cv_image, 0.35, 0.75)
+        # open_cv_image = Server.crop_image(open_cv_image, 0.37, 0.77)
         open_cv_image = cv2.resize(open_cv_image, (160, 48), interpolation=cv2.INTER_LINEAR)
         cv2.imwrite('./comm/' + 'ori-2.png', open_cv_image)
         return open_cv_image
@@ -53,17 +54,15 @@ class Server(object):
                 new_img = self.recv_images()
                 if (new_img is None):
                     break
-
                 print('Server: transmited image ' + str(image_id))
                 packaged_parameters = self.predict_and_fit(image_id, new_img)
                 print('Server: predicted and fitted image ' + str(image_id))
-
                 packaged_parameters_with_id = np.concatenate(([image_id], packaged_parameters))
                 s_packaged_parameters = packaged_parameters_with_id.tobytes()
                 self.s.sendall(s_packaged_parameters)
                 image_id = image_id + 1
-        # except:
-        #     print('closed by thread')
+        except:
+            print('closed by thread')
         finally:
             self.close_connection()
             print('connection closed')
@@ -89,9 +88,8 @@ class Server(object):
 
     @classmethod
     def crop_image(cls, img, lower_bound, upper_bound):
-        """ Crop an image with lower and upper bound.
+        """ Crop an image in the vertical direction with lower and upper bound.
         """
-        print(img.shape)
         img_cropped = img[int(img.shape[1]*lower_bound):int(img.shape[1]*upper_bound),:]
         return img_cropped
 
