@@ -51,14 +51,15 @@ class Detector(object):
         elif (peaks.shape[0] == 0):
             # no peak is detected
             lane_center_left, lane_center_right = None, None
+            return None, None
         else:
             # we only use the first two peaks as the starting points of the lanes
             peaks = peaks[:2]
             lane_center_left = peaks[0]
             lane_center_right = peaks[1]
-        if self.left_peak_previous is not None:
+        if lane_center_left is not None:
             self.left_peak_previous = lane_center_left
-        if self.right_peak_previous is not None:
+        if lane_center_right is not None:
             self.right_peak_previous = lane_center_right
         return lane_center_left, lane_center_right
 
