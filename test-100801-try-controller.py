@@ -11,17 +11,8 @@ import cv2
 import RPi.GPIO as GPIO
 from util.detect_peaks import detect_peaks
 
-MARGIN_LEFT = 260
-MARGIN_RIGHT = 380
-turningKL = 4.2 #f5or lane tracking, turning left
-turningKR = 1 #for lane tracking, turning right
-
-
-HOST = '0.0.0.0'
-PORT = 5001
 '''---------------GPIO SECTION ----------'''
 GPIO.setmode(GPIO.BCM)
-
 
 ENA = 26
 ENB = 11

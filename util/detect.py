@@ -14,9 +14,9 @@ import math_support as ms
 LANE_COLOR = np.uint8([[[0,0,0]]])
 LOW_LANE_COLOR, UPPER_LANE_COLOR = LANE_COLOR, LANE_COLOR + 20
 IMG_HEIGHT, IMG_WIDTH = 48, 160
-IMAGE_CENTER = np.int(IMG_WIDTH / 2) - 8
+IMAGE_CENTER = np.int(IMG_WIDTH / 2)
 PEAK_DISTANCE = 70
-WINDOW_SIZE = int(PEAK_DISTANCE / 2) + 10
+WINDOW_SIZE = int(PEAK_DISTANCE / 2) + 40
 # this number determines how long the tangent line is (in pixel)
 LENGTH_OF_TANGENT_LINE = 20
 
