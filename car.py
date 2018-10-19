@@ -1,19 +1,16 @@
 """ Offline Version.
 """
-
+from __future__ import absolute_import, division, print_function
 import io
-import socket
-import struct
 import time
 import picamera
-import threading
 import numpy as np
-import cv2
 from PIL import Image
 from os.path import join
 
 from control.controller import Controller
 from util.detect import Detector
+from util import img_process
 
 
 LOW_LANE_COLOR = np.uint8([[[0,0,0]]])
@@ -21,38 +18,28 @@ UPPER_LANE_COLOR = np.uint8([[[0,0,0]]]) + 40
 cur_img = None
 
 class Car(object):
+    """ Offline car-control, with only one thread.
+    """
     def __init__(self):
         self.contorller = Controller()
         self.detector = Detector()
         self.counter = 1
 
-    @classmethod
-    def lane_filter(cls, img, lower_lane_color, upper_lane_color):
-        """ Use color filter to show lanes in the image.
-        """
-        laneIMG = cv2.inRange(img, lower_lane_color, upper_lane_color)
-        return laneIMG
-
-    @classmethod
-    def crop_image(cls, img, lower_bound, upper_bound):
-        img_cropped = img[int(img.shape[0]*lower_bound):int(img.shape[0]*upper_bound),:]
-        return img_cropped
-
-    @classmethod
-    def preprocess_image(cls, image):
+    @staticmethod
+    def preprocess_image(image):
         """ Perform filter operations to pre-process the image.
         """
-        img_cropped = Car.crop_image(image, 0.45, 0.85)
-        img_downsampled = cv2.resize(img_cropped, (160, 48), interpolation=cv2.INTER_LINEAR)
-        ## for debug only
+        img_cropped = img_process.crop_image(image, 0.45, 0.85)
+        img_downsampled = img_process.down_sample(img_cropped, (160, 48))
+        ###################### for debug only ######################
         cur_img = img_downsampled
-        ######################
-        lane_img = Car.lane_filter(img_downsampled, LOW_LANE_COLOR, UPPER_LANE_COLOR)
+        ############################################################
+        lane_img = img_process.lane_filter(img_downsampled, LOW_LANE_COLOR, UPPER_LANE_COLOR)
         bin_img = lane_img / 255
         return bin_img
 
-    @classmethod
-    def unpackage_paras(cls, packaged_parameters):
+    @staticmethod
+    def unpackage_paras(packaged_parameters):
         """ Unpackage the parameters from buffer.
             @Paras:
                 packaged_parameters: np array
@@ -69,13 +56,14 @@ class Car(object):
         stop_signal = (np.all(w_left == np.zeros(3)) and np.all(w_right == np.zeros(3)))
         return distance_to_center, distance_at_middle, curvature, stop_signal
 
-    @classmethod
-    def save_fitting_img(cls, img, wrapped_parameters, img_name):
+    @staticmethod
+    def save_fitting_img(img, wrapped_parameters, img_name):
         debug_img = Detector.mark_image_with_parameters(img, wrapped_parameters)
-        cv2.imwrite(img_name, debug_img)
+        img_process.img_save(debug_img, img_name)
 
     def calc_para_from_image(self, image):
         wrapped_parameters = self.detector.get_wrapped_all_parameters(image)
+        # save the fitted image
         img_name = './test-output/' + str(self.counter) + '.png'
         Car.save_fitting_img(cur_img, wrapped_parameters, img_name)
         self.counter += 1
