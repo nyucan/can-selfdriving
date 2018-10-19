@@ -81,7 +81,7 @@ class Controller(object):
         """ Make decision with a list of parameters.
         """
         state = np.array([distance_to_center, distance_at_mid, curvature_at_x])
-        K_mid = 8
+        K_mid = 6
         differential_drive = -K_mid * distance_at_mid
 
         pwm_mid = 50

@@ -129,7 +129,7 @@ def compute_points_on_tangent_line(slope, intercept, x_curv, length_tangent_line
 #For the color filter
 lane_color = np.uint8([[[0,0,0]]])
 lower_lane_color1 = lane_color
-upper_lane_color1 = lane_color+40
+upper_lane_color1 = lane_color + 40
 
 # the distances of peaks should be tuned
 # the peaks indicate the possible center of left and right lanes

@@ -63,16 +63,16 @@ class Detector(object):
             self.right_peak_previous = lane_center_right
         return lane_center_left, lane_center_right
 
-    def calc_fitting_weights(self, image):
+    def calc_fitting_weights(self, bin_img):
         """ Calculate the polynormial fitting parameters.
             @returns
                 w_left:                np.array
                 w_right:               np.array
                 w_mid:                 np.array
         """
-        laneIMG = Detector.lane_filter(image, LOW_LANE_COLOR, UPPER_LANE_COLOR)
-        laneIMG_binary = laneIMG / 255
-        lane_center_left, lane_center_right = self.find_lane_centers(laneIMG_binary)
+        # laneIMG = Detector.lane_filter(image, LOW_LANE_COLOR, UPPER_LANE_COLOR)
+        # laneIMG_binary = laneIMG / 255
+        lane_center_left, lane_center_right = self.find_lane_centers(bin_img)
 
         w_left, w_right, w_mid = self.w_left_previous, self.w_right_previous, np.zeros(3)
 
@@ -82,7 +82,7 @@ class Detector(object):
             return  np.zeros(3), np.zeros(3), np.zeros(3)
         else:
             if lane_center_left is not None:
-                x_left, y_left = Detector.find_pixels_of_lane(laneIMG_binary, lane_center_left, WINDOW_SIZE, IMG_WIDTH)
+                x_left, y_left = Detector.find_pixels_of_lane(bin_img, lane_center_left, WINDOW_SIZE, IMG_WIDTH)
                 try:
                     w_left = np.polyfit(x_left, y_left, POLY_ORDER)
                     self.w_left_previous = w_left
@@ -92,7 +92,7 @@ class Detector(object):
                     print('Detector: Rank Warning!!!')
                     w_left = self.w_left_previous
             if lane_center_right is not None:
-                x_right, y_right = Detector.find_pixels_of_lane(laneIMG_binary, lane_center_right, WINDOW_SIZE, IMG_WIDTH)
+                x_right, y_right = Detector.find_pixels_of_lane(bin_img, lane_center_right, WINDOW_SIZE, IMG_WIDTH)
                 try:
                     w_right = np.polyfit(x_right, y_right, POLY_ORDER)
                     self.w_right_previous = w_right
