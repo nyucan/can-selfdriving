@@ -9,7 +9,10 @@ from PIL import Image
 
 from fcn.predict import Predictor
 from util.detect import Detector
+from util import img_process
 
+LOW_LANE_COLOR = np.uint8([[[0,0,0]]])
+UPPER_LANE_COLOR = np.uint8([[[0,0,0]]]) + 10
 
 class Server(object):
     def __init__(self, model):
@@ -23,6 +26,17 @@ class Server(object):
         self.s = self.server.accept()[0]
         self.connection = self.s.makefile('rb')
         print('server: new connection')
+
+    @staticmethod
+    def preprocess_image(image):
+        """ Perform filter operations to pre-process the image.
+        """
+        img_cropped = img_process.crop_image(image, 0.45, 0.85)
+        # print(img_cropped.shape)
+        # img_downsampled = img_process.down_sample(img_cropped, (160, 48))
+        # lane_img = img_process.lane_filter(img_downsampled, LOW_LANE_COLOR, UPPER_LANE_COLOR)
+        # bin_img = lane_img / 255
+        return img_cropped
 
     def recv_images(self):
         """ Get image from the server.
@@ -39,47 +53,47 @@ class Server(object):
         image_stream.seek(0)
         image = Image.open(image_stream).convert('RGB')
         open_cv_image = np.array(image)
-        cv2.imwrite('./comm/' + 'ori.png', open_cv_image)
-        open_cv_image = Server.crop_image(open_cv_image, 0.35, 0.75)
-        # open_cv_image = Server.crop_image(open_cv_image, 0.37, 0.77)
-        open_cv_image = cv2.resize(open_cv_image, (160, 48), interpolation=cv2.INTER_LINEAR)
-        cv2.imwrite('./comm/' + 'ori-2.png', open_cv_image)
-        return open_cv_image
+        processed_image = Server.preprocess_image(open_cv_image)
+        return processed_image
 
     def listen(self):
         print('server: listening ...')
-        try:
-            image_id = 0
-            while True:
-                new_img = self.recv_images()
-                if (new_img is None):
-                    break
-                print('Server: transmited image ' + str(image_id))
-                packaged_parameters = self.predict_and_fit(image_id, new_img)
-                print('Server: predicted and fitted image ' + str(image_id))
-                packaged_parameters_with_id = np.concatenate(([image_id], packaged_parameters))
-                s_packaged_parameters = packaged_parameters_with_id.tobytes()
-                self.s.sendall(s_packaged_parameters)
-                image_id = image_id + 1
-        except:
-            print('closed by thread')
-        finally:
-            self.close_connection()
-            print('connection closed')
+        # try:
+        image_id = 0
+        while True:
+            new_img = self.recv_images()
+            if (new_img is None):
+                break
+            print('Server: transmited image ' + str(image_id))
+            packaged_parameters = self.predict_and_fit(image_id, new_img)
+            print('Server: predicted and fitted image ' + str(image_id))
+            packaged_parameters_with_id = np.concatenate(([image_id], packaged_parameters))
+            s_packaged_parameters = packaged_parameters_with_id.tobytes()
+            self.s.sendall(s_packaged_parameters)
+            image_id = image_id + 1
+        # except:
+        #     print('closed by thread')
+        # finally:
+        #     self.close_connection()
+        #     print('connection closed')
 
     def predict_and_fit(self, imageId, image):
         """ Make prediction and then fit the predicted image.
             @return: image, left_parameters, left_parameters
         """
-        cv2.imwrite('./comm/1/' + str(imageId) + '.png', image)
+        img_process.img_save(image, './test-output/online/1/' + str(imageId) + '.png')
         # predict
         predicted_img = self.predictor.predict(image)
-        cv2.imwrite('./comm/2/' + str(imageId) + '.png', predicted_img)
+        img_process.img_save(predicted_img, './test-output/online/2/' + str(imageId) + '.png')
+
+        predicted_img = img_process.lane_filter(predicted_img, LOW_LANE_COLOR, UPPER_LANE_COLOR)
+        predicted_img = predicted_img / 255
 
         # fit
         wrapped_parameters = self.detector.get_wrapped_all_parameters(predicted_img)
-        debug_img = Detector.mark_image_with_parameters(predicted_img, wrapped_parameters)
-        cv2.imwrite('./comm/3/' + str(imageId) + '.png', debug_img)
+
+        debug_img = Detector.mark_image_with_parameters(image, wrapped_parameters)
+        img_process.img_save(debug_img, './test-output/online/3/' + str(imageId) + '.png')
         return wrapped_parameters
 
     def close_connection(self):

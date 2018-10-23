@@ -1,21 +1,24 @@
-""" Offline Version.
+""" Project Entrance.
 """
 from __future__ import absolute_import, division, print_function
 import io
 import time
 import picamera
+import threading
+import socket
+from os.path import join
 import numpy as np
 from PIL import Image
-from os.path import join
 
 from control.controller import Controller
 from util.detect import Detector
 from util import img_process
+import client
 
 
 LOW_LANE_COLOR = np.uint8([[[0,0,0]]])
 UPPER_LANE_COLOR = np.uint8([[[0,0,0]]]) + 40
-cur_img = None
+DEBUG = True
 
 class Car(object):
     """ Offline car-control, with only one thread.
@@ -23,7 +26,6 @@ class Car(object):
     def __init__(self):
         self.contorller = Controller()
         self.detector = Detector()
-        self.counter = 1
 
     @staticmethod
     def preprocess_image(image):
@@ -31,12 +33,9 @@ class Car(object):
         """
         img_cropped = img_process.crop_image(image, 0.45, 0.85)
         img_downsampled = img_process.down_sample(img_cropped, (160, 48))
-        ###################### for debug only ######################
-        cur_img = img_downsampled
-        ############################################################
         lane_img = img_process.lane_filter(img_downsampled, LOW_LANE_COLOR, UPPER_LANE_COLOR)
         bin_img = lane_img / 255
-        return bin_img
+        return bin_img, img_downsampled
 
     @staticmethod
     def unpackage_paras(packaged_parameters):
@@ -63,10 +62,6 @@ class Car(object):
 
     def calc_para_from_image(self, image):
         wrapped_parameters = self.detector.get_wrapped_all_parameters(image)
-        # save the fitted image
-        img_name = './test-output/' + str(self.counter) + '.png'
-        Car.save_fitting_img(cur_img, wrapped_parameters, img_name)
-        self.counter += 1
         return wrapped_parameters
 
     def make_decisiton_with(self, dc, dm, cur, stop_signal):
@@ -77,31 +72,68 @@ class Car(object):
         else:
             self.contorller.make_decision(dc, dm, cur)
 
-    def run(self):
+    def run_offline(self):
         stream = io.BytesIO()
+        counter = 1
+        first_start = True
         with picamera.PiCamera(resolution='VGA') as camera:
             with io.BytesIO() as stream:
-                self.contorller.motor.motor_startup()
                 for frame in camera.capture_continuous(stream, format='jpeg', use_video_port=True):
                     stream.seek(0)
                     image = np.array(Image.open(stream))
-                    processed_image = Car.preprocess_image(image)
+                    processed_image, input_img = Car.preprocess_image(image)
                     paras = self.calc_para_from_image(processed_image)
                     dc, dm, cur, ss = Car.unpackage_paras(paras)
+                    ########### visualize result ###########
+                    if DEBUG:
+                        w_l, w_r, w_m = paras[0:3], paras[3:6], paras[6:9]
+                        x = np.linspace(0, 48, 48)
+                        for cur_w in [w_l, w_r, w_m]:
+                            pts = np.array([Detector.calc_fitting_pts(cur_w, x), x], np.int32).transpose()
+                            input_img = img_process.plot_line(input_img, pts, 'yellow')
+                        img_name = join('.', 'test-output', str(counter) + '.png')
+                        counter += 1
+                        print('save image to ' + img_name)
+                        img_process.img_save(input_img, img_name)
+                    ########################################
+                    if first_start:
+                        self.contorller.start()
+                        first_start = False
                     self.make_decisiton_with(dc, dm, cur, ss)
                     stream.seek(0)
                     stream.truncate()
+
+    def run_online(self, ip, port):
+        # self.contorller.start()
+        cs = socket.socket()
+        cs.connect((ip, port))
+        send_img_thread = threading.Thread(target=client.send_img, args=(cs, self.contorller,))
+        recv_data_thread = threading.Thread(target=client.recv_data, args=(cs, self.contorller,))
+        send_img_thread.start()
+        recv_data_thread.start()
 
     def stop(self):
         self.contorller.finish_control()
         self.contorller.cleanup()
 
 
-if __name__ == '__main__':
-    car = Car()
-    car.run()
+def test_offline():
     try:
         car = Car()
-        car.run()
+        car.run_offline()
     except KeyboardInterrupt:
         car.stop()
+
+
+def test_online(ip, addr):
+    try:
+        car = Car()
+        car.run_online(ip, addr)
+    except KeyboardInterrupt:
+        car.stop()
+
+
+if __name__ == '__main__':
+    # offline test
+    # test_offline()
+    test_online('192.168.20.103', 8888)

@@ -16,7 +16,7 @@ LOW_LANE_COLOR, UPPER_LANE_COLOR = LANE_COLOR, LANE_COLOR + 20
 IMG_HEIGHT, IMG_WIDTH = 48, 160
 IMAGE_CENTER = np.int(IMG_WIDTH / 2)
 PEAK_DISTANCE = 70
-WINDOW_SIZE = int(PEAK_DISTANCE / 2) + 40
+WINDOW_SIZE = int(PEAK_DISTANCE / 2)
 # this number determines how long the tangent line is (in pixel)
 LENGTH_OF_TANGENT_LINE = 20
 
@@ -177,13 +177,13 @@ class Detector(object):
         laneIMG = cv2.inRange(img, lower_lane_color, upper_lane_color)
         return laneIMG
 
-    @classmethod
-    def plot_lines(cls, image, pts_left, pts_right):
-        """ Plot fitting lines on an image.
-        """
-        cv2.polylines(image, [pts_left], False, (0, 255, 255), 1)
-        cv2.polylines(image, [pts_right], False, (0, 255, 255), 1)
-        return cv2.resize(image, (0,0), fx=6, fy=6)
+    # @classmethod
+    # def plot_lines(cls, image, pts_left, pts_right):
+    #     """ Plot fitting lines on an image.
+    #     """
+    #     cv2.polylines(image, [pts_left], False, (0, 255, 255), 1)
+    #     cv2.polylines(image, [pts_right], False, (0, 255, 255), 1)
+    #     return cv2.resize(image, (0,0), fx=6, fy=6)
 
     @classmethod
     def calc_fitting_pts(cls, w, x):
@@ -208,7 +208,7 @@ class Detector(object):
         cv2.polylines(img, [pts_list[2]], False, (0,255,0), 1)
         return img
 
-    @classmethod
-    def visualization(cls, img):
-        show_img = cv2.resize(img, (0,0), fx=6, fy=6)
-        cv2.imshow('fitted image', img)
+    # @classmethod
+    # def visualization(cls, img):
+    #     show_img = cv2.resize(img, (0,0), fx=6, fy=6)
+    #     cv2.imshow('fitted image', img)

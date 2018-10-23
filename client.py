@@ -32,11 +32,6 @@ class SplitFrames(object):
         self.stream.write(buf)
 
 
-class Client(object):
-    def __init__(self):
-        pass
-
-
 def send_img(cs, contorller):
     connection = cs.makefile('wb')
     print('client: sending images')
@@ -45,7 +40,6 @@ def send_img(cs, contorller):
         # with picamera.PiCamera(resolution='VGA', framerate=30) as camera:
         with picamera.PiCamera(resolution=(160, 120), framerate=30) as camera:
             time.sleep(1)
-            contorller.motor.motor_startup()
             camera.start_recording(output, format='mjpeg')
             camera.wait_recording(10)
             camera.stop_recording()
@@ -63,21 +57,25 @@ def recv_data(s, contorller):
     """
     print('client: ready to recv data')
     pre_img_id = -1
+    first_start = True
     while (True):
-        try:
-            buffer = s.recv(1024)
-            if (buffer is not None):
-                img_id, dc, dm, cur, signal = unpackage_paras(buffer)
-                print('Received: ' + str(img_id))
-                if img_id <= pre_img_id:
-                    # outdate data
-                    continue
-                make_decisiton_with(dc, dm, cur, signal, contorller)
-                pre_img_id = img_id  # update
-        except:
-            print('thread: error happened in recv_data')
-            contorller.finish_control()
-            break
+        # try:
+        buffer = s.recv(1024)
+        if (buffer is not None):
+            img_id, dc, dm, cur, signal = unpackage_paras(buffer)
+            print('Received: ' + str(img_id))
+            if img_id <= pre_img_id:
+                # outdate data
+                continue
+            if first_start:
+                contorller.start()
+                first_start = False
+            make_decisiton_with(dc, dm, cur, signal, contorller)
+            pre_img_id = img_id  # update
+        # except:
+        #     print('thread: error happened in recv_data')
+        #     contorller.finish_control()
+        #     break
 
 
 def unpackage_paras(buffer):
