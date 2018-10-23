@@ -94,6 +94,8 @@ class Server(object):
 
         debug_img = Detector.mark_image_with_parameters(image, wrapped_parameters)
         img_process.img_save(debug_img, './test-output/online/3/' + str(imageId) + '.png')
+        cv2.imshow("capture", debug_img)
+
         return wrapped_parameters
 
     def close_connection(self):
