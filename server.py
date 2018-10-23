@@ -31,7 +31,7 @@ class Server(object):
     def preprocess_image(image):
         """ Perform filter operations to pre-process the image.
         """
-        img_cropped = img_process.crop_image(image, 0.45, 0.85)
+        img_cropped = img_process.crop_image(image, 0.35, 0.75)
         # print(img_cropped.shape)
         # img_downsampled = img_process.down_sample(img_cropped, (160, 48))
         # lane_img = img_process.lane_filter(img_downsampled, LOW_LANE_COLOR, UPPER_LANE_COLOR)

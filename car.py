@@ -1,6 +1,7 @@
 """ Project Entrance.
 """
 from __future__ import absolute_import, division, print_function
+import sys
 import io
 import time
 import picamera
@@ -134,6 +135,14 @@ def test_online(ip, addr):
 
 
 if __name__ == '__main__':
-    # offline test
-    # test_offline()
-    test_online('192.168.20.103', 8888)
+    if len(sys.argv) < 2:
+        print('please provide running mode')
+    else:
+        mode = str(sys.argv[1])
+        print('running mode: ' + str(mode))
+        if mode == 'online':
+            test_online('192.168.20.103', 8888)
+        elif mode == 'offline':
+            test_offline()
+        else:
+            print('mode can only be online or offline')
