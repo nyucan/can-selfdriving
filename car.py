@@ -126,7 +126,7 @@ def test_offline():
         car.stop()
 
 
-def test_online(ip, addr):
+def test_online_multithread(ip, addr):
     try:
         car = Car()
         car.run_online(ip, addr)
@@ -141,7 +141,7 @@ if __name__ == '__main__':
         mode = str(sys.argv[1])
         print('running mode: ' + str(mode))
         if mode == 'online':
-            test_online('192.168.20.103', 8888)
+            test_online_multithread('192.168.20.103', 8888)
         elif mode == 'offline':
             test_offline()
         else:

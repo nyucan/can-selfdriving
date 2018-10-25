@@ -70,8 +70,6 @@ class Detector(object):
                 w_right:               np.array
                 w_mid:                 np.array
         """
-        # laneIMG = Detector.lane_filter(image, LOW_LANE_COLOR, UPPER_LANE_COLOR)
-        # laneIMG_binary = laneIMG / 255
         lane_center_left, lane_center_right = self.find_lane_centers(bin_img)
 
         w_left, w_right, w_mid = self.w_left_previous, self.w_right_previous, np.zeros(3)
@@ -159,6 +157,22 @@ class Detector(object):
         return wrapped_parameters
 
     @classmethod
+    def get_distance_2_tan(cls, w_m):
+        center_pt = (IMG_HEIGHT / 2, IMG_WIDTH / 2)
+        x = np.linspace(0, IMG_HEIGHT, NUMBER_OF_POINTS)
+        pts = np.array([cls.calc_fitting_pts(w_m, x), x], np.int32).transpose()
+        min_distance = 1000
+        it, index = 0, 0
+        for pt in pts:
+            distance = ms.distance(pt, center_pt)
+            print(distance)
+            if distance < min_distance:
+                min_distance = distance
+                index = it
+            it = it + 1
+        return min_distance, index
+
+    @classmethod
     def find_pixels_of_lane(cls, laneIMG_binary, lane_center, window_size, width_of_laneIMG_binary):
         """ Find pixels/indices of one of the left and the right lane
             need to call twice, one for left line, and the other for right lane
@@ -169,21 +183,6 @@ class Detector(object):
         # shifted because we are using a part of laneIMG to find non-zero elements
         y = indices_nonzero[1] + np.max([0, lane_center - window_size])
         return x, y
-
-    @classmethod
-    def lane_filter(cls, img, lower_lane_color, upper_lane_color):
-        """ Use color filter to show lanes in the image.
-        """
-        laneIMG = cv2.inRange(img, lower_lane_color, upper_lane_color)
-        return laneIMG
-
-    # @classmethod
-    # def plot_lines(cls, image, pts_left, pts_right):
-    #     """ Plot fitting lines on an image.
-    #     """
-    #     cv2.polylines(image, [pts_left], False, (0, 255, 255), 1)
-    #     cv2.polylines(image, [pts_right], False, (0, 255, 255), 1)
-    #     return cv2.resize(image, (0,0), fx=6, fy=6)
 
     @classmethod
     def calc_fitting_pts(cls, w, x):
@@ -207,8 +206,3 @@ class Detector(object):
         cv2.polylines(img, [pts_list[1]], False, (0,255,255), 1)
         cv2.polylines(img, [pts_list[2]], False, (0,255,0), 1)
         return img
-
-    # @classmethod
-    # def visualization(cls, img):
-    #     show_img = cv2.resize(img, (0,0), fx=6, fy=6)
-    #     cv2.imshow('fitted image', img)

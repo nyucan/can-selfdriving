@@ -44,10 +44,20 @@ def slope_function(slope, intercept, x):
     return result
 
 
-# compute two points on the tangent line that tangent to the mid_fitted line at x_curv
 def compute_points_on_tangent_line(slope, intercept, x_curv, length_tangent_line):
+    """ Compute two points on the tangent line that tangent to the mid_fitted line at x_curv.
+    """
     x_curv_1 = x_curv - int(length_tangent_line/2)
     y_curv_1 = int(slope_function(first_order_derivative_at_x, intercept, x_curv_1))
     x_curv_2 = x_curv + int(length_tangent_line/2)
     y_curv_2 = int(slope_function(first_order_derivative_at_x, intercept, x_curv_2))
     return x_curv_1, y_curv_1, x_curv_2, y_curv_2
+
+
+def distance(pt_a, pt_b):
+    """ Calculate distance between 2 points.
+        @params:
+            pt_a: (x, y)
+            pt_b: (x, y)
+    """
+    return math.sqrt((pt_a[0] - pt_b[0])**2 + (pt_a[1] - pt_b[1])**2)
