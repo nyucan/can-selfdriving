@@ -83,9 +83,9 @@ class Controller(object):
                 distance_at_mid
                 distance_2_tan
         """
-        state = np.array([distance_to_center, distance_at_mid, curvature_at_x])
+        state = np.array([distance_to_center, distance_2_tan, curvature_at_x])
         K_mid = 6
-        differential_drive = -K_mid * distance_at_mid
+        differential_drive = K_mid * distance_2_tan
         pwm_mid = 50
         pwm_l_new = np.clip(pwm_mid - differential_drive / 2, 0, 100.0)
         pwm_r_new = np.clip(pwm_mid + differential_drive / 2, 0, 100.0)

@@ -64,13 +64,13 @@ class Car(object):
         wrapped_parameters = self.detector.get_wrapped_all_parameters(image)
         return wrapped_parameters
 
-    def make_decisiton_with(self, dc, dm, cur, stop_signal):
+    def make_decisiton_with(self, dc, dm, dis_2_tan, cur, stop_signal):
         print('making desicion with ', dc, dm, cur ,str(stop_signal))
         if stop_signal:
             # stop the car!
             self.contorller.finish_control()
         else:
-            self.contorller.make_decision(dc, dm, cur)
+            self.contorller.make_decision(dc, dm, dis_2_tan, cur)
 
     def run_offline(self):
         stream = io.BytesIO()
@@ -85,11 +85,11 @@ class Car(object):
                     processed_image, input_img = Car.preprocess_image(image)
                     paras = self.calc_para_from_image(processed_image)
                     dc, dm, cur, ss = Car.unpackage_paras(paras)
+                    dis_to_tan, pt = Detector.get_distance_2_tan(paras[6:9])
                     ########### visualize result ###########
                     if configs['debug']:
                         ori_img = img_process.crop_image(image, 0.45, 0.85)
                         ori_img = img_process.down_sample(ori_img, (160, 48))
-                        dis, pt = Detector.get_distance_2_tan(paras[6:9])
                         fitting_img = img_process.mark_image_with_parameters(ori_img, paras, IMG_H, NUM_OF_POINTS)
                         img_process.mark_image_with_pt(fitting_img, (80, 24), (0,255,0))
                         img_process.mark_image_with_pt(fitting_img, pt, (0, 255, 255))
@@ -100,7 +100,7 @@ class Car(object):
                     if first_start:
                         self.contorller.start()
                         first_start = False
-                    self.make_decisiton_with(dc, dm, cur, ss)
+                    self.make_decisiton_with(dc, dm, dis_to_tan, cur, ss)
                     stream.seek(0)
                     stream.truncate()
 
