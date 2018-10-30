@@ -1,7 +1,9 @@
 data/
 dateset/
 models/
+q-models/
 logs/
 comm/
 test-output/
+.vscode
 *.pyc

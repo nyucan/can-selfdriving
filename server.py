@@ -53,8 +53,7 @@ class Server(object):
         image_stream.seek(0)
         image = Image.open(image_stream).convert('RGB')
         open_cv_image = np.array(image)
-        processed_image = Server.preprocess_image(open_cv_image)
-        return processed_image
+        return open_cv_image
 
     def listen(self):
         print('server: listening ...')
@@ -64,13 +63,16 @@ class Server(object):
             new_img = self.recv_images()
             if (new_img is None):
                 break
+            img_process.show_img(new_img)
             print('Server: transmited image ' + str(image_id))
-            packaged_parameters = self.predict_and_fit(image_id, new_img)
-            print('Server: predicted and fitted image ' + str(image_id))
-            packaged_parameters_with_id = np.concatenate(([image_id], packaged_parameters))
-            s_packaged_parameters = packaged_parameters_with_id.tobytes()
-            self.s.sendall(s_packaged_parameters)
+            #################
+            # packaged_parameters = self.predict_and_fit(image_id, new_img)
+            # print('Server: predicted and fitted image ' + str(image_id))
+            # packaged_parameters_with_id = np.concatenate(([image_id], packaged_parameters))
+            # s_packaged_parameters = packaged_parameters_with_id.tobytes()
+            # self.s.sendall(s_packaged_parameters)
             image_id = image_id + 1
+            #################
         # except:
         #     print('closed by thread')
         # finally:
@@ -81,6 +83,7 @@ class Server(object):
         """ Make prediction and then fit the predicted image.
             @return: image, left_parameters, left_parameters
         """
+        image = img_process.crop_image(image, 0.35, 0.75)
         img_process.img_save(image, './test-output/online/1/' + str(imageId) + '.png')
         # predict
         predicted_img = self.predictor.predict(image)

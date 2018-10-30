@@ -3,6 +3,7 @@
 from __future__ import absolute_import, division, print_function
 import sys
 import io
+import struct
 import time
 import picamera
 import threading
@@ -14,12 +15,9 @@ from PIL import Image
 from control.controller import Controller
 from util.detect import Detector
 from util import img_process
+from config import configs
 import client
 
-
-LOW_LANE_COLOR = np.uint8([[[0,0,0]]])
-UPPER_LANE_COLOR = np.uint8([[[0,0,0]]]) + 40
-DEBUG = True
 
 class Car(object):
     """ Offline car-control, with only one thread.
@@ -86,7 +84,7 @@ class Car(object):
                     paras = self.calc_para_from_image(processed_image)
                     dc, dm, cur, ss = Car.unpackage_paras(paras)
                     ########### visualize result ###########
-                    if DEBUG:
+                    if configs['debug']:
                         w_l, w_r, w_m = paras[0:3], paras[3:6], paras[6:9]
                         x = np.linspace(0, 48, 48)
                         for cur_w in [w_l, w_r, w_m]:
@@ -112,6 +110,34 @@ class Car(object):
         recv_data_thread = threading.Thread(target=client.recv_data, args=(cs, self.contorller,))
         send_img_thread.start()
         recv_data_thread.start()
+
+    def run_online_alone(self, ip, port):
+        client_socket = socket.socket()
+        client_socket.connect((ip, port))
+        connection = client_socket.makefile('wb')
+        try:
+            with picamera.PiCamera() as camera:
+                camera.resolution = (640, 480)
+                camera.framerate = 30
+                time.sleep(2)
+                start = time.time()
+                count = 0
+                stream = io.BytesIO()
+                for foo in camera.capture_continuous(stream, 'jpeg', use_video_port=True):
+                    connection.write(struct.pack('<L', stream.tell()))
+                    connection.flush()
+                    stream.seek(0)
+                    connection.write(stream.read())
+                    count += 1
+                    if time.time() - start > 30:
+                        break
+                    stream.seek(0)
+                    stream.truncate()
+            connection.write(struct.pack('<L', 0))
+        finally:
+            connection.close()
+            client_socket.close()
+            finish = time.time()
 
     def stop(self):
         self.contorller.finish_control()

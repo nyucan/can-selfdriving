@@ -11,8 +11,6 @@ import util
 import math_support as ms
 
 
-LANE_COLOR = np.uint8([[[0,0,0]]])
-LOW_LANE_COLOR, UPPER_LANE_COLOR = LANE_COLOR, LANE_COLOR + 20
 IMG_HEIGHT, IMG_WIDTH = 48, 160
 IMAGE_CENTER = np.int(IMG_WIDTH / 2)
 PEAK_DISTANCE = 50

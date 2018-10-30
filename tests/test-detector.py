@@ -5,6 +5,12 @@ from util import img_process
 
 BASE_DIR = join('.', 'tests')
 
+def test_imshow():
+    for i in range(1, 140):
+        test_img = img_process.img_load(join(BASE_DIR, 'input', str(i) + '.png'))
+        img_process.show_img(test_img)
+
+
 def test_detector():
     det = Detector()
     test_img = img_process.img_load(join(BASE_DIR, 'input', '1.png'))
@@ -15,4 +21,4 @@ def test_detector():
 
 
 if __name__ == '__main__':
-    test_detector()
+    test_imshow()

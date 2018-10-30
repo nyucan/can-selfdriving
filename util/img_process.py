@@ -30,6 +30,8 @@ def lane_filter(img, lower_lane_color, upper_lane_color):
 
 
 def crop_image(img, lower_bound, upper_bound):
+    """ Crop image along the height direction.
+    """
     img_cropped = img[int(img.shape[0]*lower_bound):int(img.shape[0]*upper_bound),:]
     return img_cropped
 
@@ -62,3 +64,11 @@ def plot_line(image, pts, color='yellow'):
 def enlarge_img(img, times):
     cv2.resize(image, (0,0), fx=times, fy=times)
     return img
+
+
+def show_img(img, is_bin=False):
+    if is_bin:
+        # restore
+        pass
+    cv2.imshow("image", img)
+    cv2.waitKey(100)
