@@ -7,10 +7,14 @@ import cv2
 from time import sleep
 from PIL import Image
 
+from config import configs
 from fcn.predict import Predictor
 from util.detect import Detector
 from util import img_process
 
+IMG_W = configs['data']['image_width']
+IMG_H = configs['data']['image_height']
+NUM_OF_POINTS = configs['fitting']['num_of_points']
 LOW_LANE_COLOR = np.uint8([[[0,0,0]]])
 UPPER_LANE_COLOR = np.uint8([[[0,0,0]]]) + 10
 
@@ -51,9 +55,12 @@ class Server(object):
         image_stream = io.BytesIO()
         image_stream.write(self.connection.read(image_len))
         image_stream.seek(0)
-        image = Image.open(image_stream).convert('RGB')
-        open_cv_image = np.array(image)
-        return open_cv_image
+        file_bytes = np.asarray(bytearray(image_stream.read()), dtype=np.uint8)
+        image = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
+        # print(image.shape) # (480, 640, 3)
+        # image = Image.open(image_stream).convert('RGB')
+        # open_cv_image = np.array(image)
+        return image
 
     def listen(self):
         print('server: listening ...')
@@ -95,7 +102,7 @@ class Server(object):
         # fit
         wrapped_parameters = self.detector.get_wrapped_all_parameters(predicted_img)
 
-        debug_img = Detector.mark_image_with_parameters(image, wrapped_parameters)
+        debug_img = img_process.mark_image_with_parameters(image, wrapped_parameters, IMG_H, NUM_OF_POINTS)
         img_process.img_save(debug_img, './test-output/online/3/' + str(imageId) + '.png')
         cv2.imshow("capture", debug_img)
 

@@ -12,5 +12,8 @@ configs = {
         'image_width': 160,
         'image_height': 48
     },
+    'fitting': {
+        'num_of_points': 48
+    },
     'debug': True
 }

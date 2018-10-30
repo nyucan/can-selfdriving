@@ -18,6 +18,11 @@ from util import img_process
 from config import configs
 import client
 
+IMG_W = configs['data']['image_width']
+IMG_H = configs['data']['image_height']
+NUM_OF_POINTS = configs['fitting']['num_of_points']
+LOW_LANE_COLOR = np.uint8([[[0,0,0]]])
+UPPER_LANE_COLOR = np.uint8([[[0,0,0]]]) + 40
 
 class Car(object):
     """ Offline car-control, with only one thread.
@@ -25,6 +30,7 @@ class Car(object):
     def __init__(self):
         self.contorller = Controller()
         self.detector = Detector()
+
 
     @staticmethod
     def preprocess_image(image):
@@ -54,11 +60,6 @@ class Car(object):
         stop_signal = (np.all(w_left == np.zeros(3)) and np.all(w_right == np.zeros(3)))
         return distance_to_center, distance_at_middle, curvature, stop_signal
 
-    @staticmethod
-    def save_fitting_img(img, wrapped_parameters, img_name):
-        debug_img = Detector.mark_image_with_parameters(img, wrapped_parameters)
-        img_process.img_save(debug_img, img_name)
-
     def calc_para_from_image(self, image):
         wrapped_parameters = self.detector.get_wrapped_all_parameters(image)
         return wrapped_parameters
@@ -80,20 +81,21 @@ class Car(object):
                 for frame in camera.capture_continuous(stream, format='jpeg', use_video_port=True):
                     stream.seek(0)
                     image = np.array(Image.open(stream))
+
                     processed_image, input_img = Car.preprocess_image(image)
                     paras = self.calc_para_from_image(processed_image)
                     dc, dm, cur, ss = Car.unpackage_paras(paras)
                     ########### visualize result ###########
                     if configs['debug']:
-                        w_l, w_r, w_m = paras[0:3], paras[3:6], paras[6:9]
-                        x = np.linspace(0, 48, 48)
-                        for cur_w in [w_l, w_r, w_m]:
-                            pts = np.array([Detector.calc_fitting_pts(cur_w, x), x], np.int32).transpose()
-                            input_img = img_process.plot_line(input_img, pts, 'yellow')
-                        img_name = join('.', 'test-output', str(counter) + '.png')
-                        counter += 1
-                        print('save image to ' + img_name)
-                        img_process.img_save(input_img, img_name)
+                        ori_img = img_process.crop_image(image, 0.45, 0.85)
+                        ori_img = img_process.down_sample(ori_img, (160, 48))
+                        dis, pt = Detector.get_distance_2_tan(paras[6:9])
+                        fitting_img = img_process.mark_image_with_parameters(ori_img, paras, IMG_H, NUM_OF_POINTS)
+                        img_process.mark_image_with_pt(fitting_img, (80, 24), (0,255,0))
+                        img_process.mark_image_with_pt(fitting_img, pt, (0, 255, 255))
+                        fitting_img = img_process.enlarge_img(fitting_img, 6)
+                        img_process.show_img(fitting_img)
+                        # img_process.img_save(fitting_img, join(BASE_DIR, 'output', str(i) + '.png'))
                     ########################################
                     if first_start:
                         self.contorller.start()
@@ -138,6 +140,7 @@ class Car(object):
             connection.close()
             client_socket.close()
             finish = time.time()
+            print(finish - start)
 
     def stop(self):
         self.contorller.finish_control()

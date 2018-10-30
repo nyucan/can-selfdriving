@@ -5,8 +5,8 @@ import numpy as np
 import os
 from os.path import join
 from glob import glob
-from detect_peaks import detect_peaks
 
+from detect_peaks import detect_peaks
 import util
 import math_support as ms
 
@@ -156,19 +156,24 @@ class Detector(object):
 
     @classmethod
     def get_distance_2_tan(cls, w_m):
-        center_pt = (IMG_HEIGHT / 2, IMG_WIDTH / 2)
+        """ Calculate the distance to tangent point.
+            pts: [pos_on_width, pos_on_height] (y, x)
+        """
+        center_pt = (IMG_WIDTH / 2, IMG_HEIGHT / 2)
         x = np.linspace(0, IMG_HEIGHT, NUMBER_OF_POINTS)
         pts = np.array([cls.calc_fitting_pts(w_m, x), x], np.int32).transpose()
         min_distance = 1000
-        it, index = 0, 0
+        min_pt = (0, 0)
         for pt in pts:
+            car_is_right = center_pt[0] - pt[0] > 0
+            sign = 1
+            if not car_is_right:
+                sign = -1
             distance = ms.distance(pt, center_pt)
-            print(distance)
-            if distance < min_distance:
-                min_distance = distance
-                index = it
-            it = it + 1
-        return min_distance, index
+            if distance ** 2 < min_distance ** 2:
+                min_distance = sign * distance
+                min_pt = pt
+        return min_distance, list(min_pt)
 
     @classmethod
     def find_pixels_of_lane(cls, laneIMG_binary, lane_center, window_size, width_of_laneIMG_binary):
@@ -188,19 +193,3 @@ class Detector(object):
         y_fitted = poly_fit(x)
         return y_fitted
 
-    @classmethod
-    def mark_image_with_parameters(cls, img, parameters):
-        """ Fit the image.
-            @returns
-                res_img: image with the fitting line
-        """
-        w_l, w_r, w_m = parameters[0:3], parameters[3:6], parameters[6:9]
-        x = np.linspace(0, IMG_HEIGHT, NUMBER_OF_POINTS)
-        pts_list = []
-        for cur_w in [w_l, w_r, w_m]:
-            pts = np.array([cls.calc_fitting_pts(cur_w, x), x], np.int32).transpose()
-            pts_list.append(pts)
-        cv2.polylines(img, [pts_list[0]], False, (0,255,255), 1)
-        cv2.polylines(img, [pts_list[1]], False, (0,255,255), 1)
-        cv2.polylines(img, [pts_list[2]], False, (0,255,0), 1)
-        return img

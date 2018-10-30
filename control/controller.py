@@ -46,7 +46,7 @@ class Controller(object):
         self.threshold_distance_error = 50
 
         # memory for storing states and actions
-        memory_size = 1000
+        memory_size = 10000
         self.memory_counter = 0
         self.memory = np.zeros((memory_size, dim_state + 1))
 
@@ -77,8 +77,11 @@ class Controller(object):
         feature_sub = np.hstack((np.eye(1), s, s**2,[s[:,0]*s[:,1]])).transpose()
         return feature_sub
 
-    def make_decision(self, distance_to_center, distance_at_mid, curvature_at_x):
+    def make_decision(self, distance_to_center, distance_at_mid, distance_2_tan, curvature_at_x):
         """ Make decision with a list of parameters.
+            @paras
+                distance_at_mid
+                distance_2_tan
         """
         state = np.array([distance_to_center, distance_at_mid, curvature_at_x])
         K_mid = 6

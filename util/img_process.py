@@ -35,9 +35,11 @@ def crop_image(img, lower_bound, upper_bound):
     img_cropped = img[int(img.shape[0]*lower_bound):int(img.shape[0]*upper_bound),:]
     return img_cropped
 
+
 def img_load(path):
     img = cv2.imread(path)
     return img
+
 
 def img_save(img, path):
     cv2.imwrite(path, img)
@@ -62,7 +64,7 @@ def plot_line(image, pts, color='yellow'):
 
 
 def enlarge_img(img, times):
-    cv2.resize(image, (0,0), fx=times, fy=times)
+    img = cv2.resize(img, (0,0), fx=times, fy=times)
     return img
 
 
@@ -71,4 +73,31 @@ def show_img(img, is_bin=False):
         # restore
         pass
     cv2.imshow("image", img)
-    cv2.waitKey(100)
+    cv2.waitKey(10)
+
+
+def calc_fitting_pts(w, x):
+    poly_fit = np.poly1d(w)
+    y_fitted = poly_fit(x)
+    return y_fitted
+
+
+def mark_image_with_pt(img, pt, color):
+    cv2.circle(img, (pt[0], pt[1]), 3, color)
+
+
+def mark_image_with_parameters(img, parameters, img_height, num_of_p):
+    """ Fit the image.
+        @returns
+            res_img: image with the fitting line
+    """
+    w_l, w_r, w_m = parameters[0:3], parameters[3:6], parameters[6:9]
+    x = np.linspace(0, img_height, num_of_p)
+    pts_list = []
+    for cur_w in [w_l, w_r, w_m]:
+        pts = np.array([calc_fitting_pts(cur_w, x), x], np.int32).transpose()
+        pts_list.append(pts)
+    cv2.polylines(img, [pts_list[0]], False, (0,255,255), 1)
+    cv2.polylines(img, [pts_list[1]], False, (0,255,255), 1)
+    cv2.polylines(img, [pts_list[2]], False, (0,255,0), 1)
+    return img
