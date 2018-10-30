@@ -80,12 +80,16 @@ class Controller(object):
     def make_decision(self, distance_to_center, distance_at_mid, distance_2_tan, curvature_at_x):
         """ Make decision with a list of parameters.
             @paras
+                distance_to_center
                 distance_at_mid
                 distance_2_tan
+                # angle_of_tan
+                curvature_at_x
         """
         state = np.array([distance_to_center, distance_2_tan, curvature_at_x])
-        K_mid = 6
-        differential_drive = K_mid * distance_2_tan
+        # K_mid = -6
+        K_2tan = 6
+        differential_drive = K_2tan * distance_2_tan
         pwm_mid = 50
         pwm_l_new = np.clip(pwm_mid - differential_drive / 2, 0, 100.0)
         pwm_r_new = np.clip(pwm_mid + differential_drive / 2, 0, 100.0)

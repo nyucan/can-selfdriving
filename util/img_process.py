@@ -85,6 +85,8 @@ def calc_fitting_pts(w, x):
 def mark_image_with_pt(img, pt, color):
     cv2.circle(img, (pt[0], pt[1]), 3, color)
 
+def mark_image_with_line(img, pt_from, pt_to):
+    cv2.line(img, pt_from, pt_to, (255, 0, 255), 1)
 
 def mark_image_with_parameters(img, parameters, img_height, num_of_p):
     """ Fit the image.
@@ -97,7 +99,7 @@ def mark_image_with_parameters(img, parameters, img_height, num_of_p):
     for cur_w in [w_l, w_r, w_m]:
         pts = np.array([calc_fitting_pts(cur_w, x), x], np.int32).transpose()
         pts_list.append(pts)
-    cv2.polylines(img, [pts_list[0]], False, (0,255,255), 1)
-    cv2.polylines(img, [pts_list[1]], False, (0,255,255), 1)
-    cv2.polylines(img, [pts_list[2]], False, (0,255,0), 1)
+    cv2.polylines(img, [pts_list[0]], False, (0, 255, 255), 1)
+    cv2.polylines(img, [pts_list[1]], False, (0, 255, 255), 1)
+    cv2.polylines(img, [pts_list[2]], False, (0, 255, 0), 1)
     return img

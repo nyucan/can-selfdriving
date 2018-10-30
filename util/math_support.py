@@ -34,7 +34,7 @@ def radian(distance_at_mid, image_center):
 def compute_intercept(slope, x, y):
     """ Compute intercept of the line goes through (x,y) with the given slope.
     """
-    return y - slope*x
+    return y - slope * x
 
 
 def slope_function(slope, intercept, x):

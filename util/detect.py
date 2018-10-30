@@ -155,13 +155,13 @@ class Detector(object):
         return wrapped_parameters
 
     @classmethod
-    def get_distance_2_tan(cls, w_m):
+    def get_distance_2_tan(cls, w):
         """ Calculate the distance to tangent point.
             pts: [pos_on_width, pos_on_height] (y, x)
         """
         center_pt = (IMG_WIDTH / 2, IMG_HEIGHT / 2)
         x = np.linspace(0, IMG_HEIGHT, NUMBER_OF_POINTS)
-        pts = np.array([cls.calc_fitting_pts(w_m, x), x], np.int32).transpose()
+        pts = np.array([cls.calc_fitting_pts(w, x), x], np.int32).transpose()
         min_distance = 1000
         min_pt = (0, 0)
         for pt in pts:
@@ -174,6 +174,15 @@ class Detector(object):
                 min_distance = sign * distance
                 min_pt = pt
         return min_distance, list(min_pt)
+
+    @classmethod
+    def get_angle_of_tan(cls, w, pt):
+        """ Calculate the angle of tangent at the point `pt`
+            @params
+                w
+                pt: (w, h)
+        """
+        return w[1] + 2 * w[0] * pt[1]
 
     @classmethod
     def find_pixels_of_lane(cls, laneIMG_binary, lane_center, window_size, width_of_laneIMG_binary):

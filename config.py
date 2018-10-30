@@ -10,7 +10,8 @@ configs = {
     },
     'data': {
         'image_width': 160,
-        'image_height': 48
+        'image_height': 48,
+        'crop_part': (0.45, 0.85)
     },
     'fitting': {
         'num_of_points': 48
