@@ -38,9 +38,8 @@ class Controller(object):
         #  threshold in pixels
         self.distance_threshold = 3
 
-        # suppose we have 5 states to store: distance_to_center, distance_at_mid, first_order_derivative_at_x, intercept, curvature
-        # dim_state = 5
-        dim_state = 3
+        # suppose we have 2 states to store: distance_2_tan, angle_of_tan
+        dim_state = 2
 
         # threshold_distance_error determines if the distances_to_center is corrupted/wrongly measured
         self.threshold_distance_error = 50
@@ -77,24 +76,28 @@ class Controller(object):
         feature_sub = np.hstack((np.eye(1), s, s**2,[s[:,0]*s[:,1]])).transpose()
         return feature_sub
 
-    def make_decision(self, distance_to_center, distance_at_mid, distance_2_tan, curvature_at_x):
+    def make_decision(self, distance_to_center, distance_at_mid, distance_2_tan, radian_at_tan):
         """ Make decision with a list of parameters.
             @paras
                 distance_to_center
                 distance_at_mid
                 distance_2_tan
-                # angle_of_tan
-                curvature_at_x
+                radian_at_tan
         """
-        state = np.array([distance_to_center, distance_2_tan, curvature_at_x])
+        state = np.array([distance_2_tan, radian_at_tan])
         # K_mid = -6
         K_2tan = 6
-        differential_drive = K_2tan * distance_2_tan
-        pwm_mid = 50
-        pwm_l_new = np.clip(pwm_mid - differential_drive / 2, 0, 100.0)
-        pwm_r_new = np.clip(pwm_mid + differential_drive / 2, 0, 100.0)
+        # noise = 0
+        noise = 5 * np.random.normal(0, 20, 1)[0]
+        noise = np.clip(noise, -20, 20)
+        differential_drive = K_2tan * distance_2_tan + noise
+        differential_drive = np.clip(differential_drive, -100.0, 100.0)
         self.memory[self.memory_counter, :] = np.hstack([state, differential_drive])
+        print('counter: ', self.memory_counter)
         self.memory_counter += 1
+        pwm_mid = 50.0
+        pwm_l_new = pwm_mid - differential_drive / 2
+        pwm_r_new = pwm_mid + differential_drive / 2
         self.motor.motor_set_new_speed(pwm_l_new, pwm_r_new)
 
     def start(self):

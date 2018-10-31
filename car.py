@@ -64,7 +64,8 @@ class Car(object):
                     dc, dm, cur, ss = Car.unpackage_paras(paras)
                     dis_2_tan, pt = Detector.get_distance_2_tan(paras[6:9])
                     angle_at_tan = Detector.get_angle_of_tan(paras[6:9], pt)
-                    ### calculate points
+                    radian_at_tan = atan(angle_at_tan)
+                    ################# calculate points #################
                     w = paras[6:9]
                     delta_y = 15
                     delta_x = angle_at_tan * delta_y
@@ -93,8 +94,8 @@ class Car(object):
                         self.contorller.finish_control()
                     else:
                         ## Turn left or turn right
-                        print('making desicion with ', dc, dm, cur)
-                        self.contorller.make_decision(dc, dm, dis_2_tan, cur)
+                        print('making desicion with ', dc, dm, radian_at_tan)
+                        self.contorller.make_decision(dc, dm, dis_2_tan, radian_at_tan)
                     stream.seek(0)
                     stream.truncate()
 
