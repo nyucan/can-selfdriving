@@ -35,7 +35,7 @@ class Car(object):
 
     @staticmethod
     def unpackage_paras(packaged_parameters):
-        """ Unpackage the parameters from buffer.
+        """ Unpackage the parameters.
             @Paras:
                 packaged_parameters: np array
             @Returns:

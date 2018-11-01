@@ -1,6 +1,7 @@
 # python 2.7
 from __future__ import absolute_import, division, print_function
 import io
+from math import floor
 import numpy as np
 import cv2
 from time import sleep
@@ -13,6 +14,13 @@ class Controller(object):
     def __init__(self):
         self.motor = Motor()
         self.init_memory()
+        self.init_record()
+        self.K_traj_trunc = np.load('./control/K_traj_modified_VI.npy')
+
+    def init_record(self):
+        self.counter = 0
+        record_size = 5000
+        self.dis_record = np.zeros((record_size, 1))
 
     def init_memory(self):
         go_straight_00 = np.array([50, 60])
@@ -45,14 +53,15 @@ class Controller(object):
         self.threshold_distance_error = 50
 
         # memory for storing states and actions
-        memory_size = 10000
+        memory_size = 5000
         self.memory_counter = 0
         self.memory = np.zeros((memory_size, dim_state + 1))
 
     def finish_control(self):
         print('contorller: stop')
         self.motor.motor_stop()
-        np.save(join('.', 'q-models', 'memory_'), self.memory)
+        np.save(join('.', 'record', 'memory_'), self.memory)
+        np.save(join('.', 'record', 'dis_record'), self.dis_record)
 
     def choose_action_using_simple_logic(self, distance_to_center):
         """ Naive policy to achive lane keeping, using simple rules.
@@ -85,20 +94,21 @@ class Controller(object):
                 radian_at_tan
         """
         state = np.array([distance_2_tan, radian_at_tan])
-        # K_mid = -6
-        K_2tan = 6
-        # noise = 0
-        noise = 5 * np.random.normal(0, 20, 1)[0]
-        noise = np.clip(noise, -20, 20)
-        differential_drive = K_2tan * distance_2_tan + noise
-        differential_drive = np.clip(differential_drive, -100.0, 100.0)
+        cur_K_index = int(5 + floor(self.counter / 250))
+##        L = -28.0 # for clockwise
+        L = 0
+        differential_drive = np.clip(-np.matmul(self.K_traj_trunc[cur_K_index,:,:], state) + L, -100.0, 100.0)
         self.memory[self.memory_counter, :] = np.hstack([state, differential_drive])
-        print('counter: ', self.memory_counter)
+        print('controller:', self.counter, cur_K_index, distance_2_tan)
         self.memory_counter += 1
         pwm_mid = 50.0
         pwm_l_new = pwm_mid - differential_drive / 2
         pwm_r_new = pwm_mid + differential_drive / 2
         self.motor.motor_set_new_speed(pwm_l_new, pwm_r_new)
+        self.dis_record[self.counter] = distance_2_tan
+        self.counter += 1
+        if self.counter % 100 == 0:
+            np.save(join('.', 'record', 'dis_record'), self.dis_record)
 
     def start(self):
         self.motor.motor_startup()

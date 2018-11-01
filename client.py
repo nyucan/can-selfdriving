@@ -72,10 +72,6 @@ def recv_data(s, contorller):
                 first_start = False
             make_decisiton_with(dc, dm, cur, signal, contorller)
             pre_img_id = img_id  # update
-        # except:
-        #     print('thread: error happened in recv_data')
-        #     contorller.finish_control()
-        #     break
 
 
 def unpackage_paras(buffer):
@@ -99,7 +95,6 @@ def unpackage_paras(buffer):
     distance_at_middle = cur_paras[11]
     radian = cur_paras[12]
     curvature = cur_paras[13]
-
     stop_signal = (np.all(w_left == np.zeros(3)) and np.all(w_right == np.zeros(3)))
     return image_id, distance_to_center, distance_at_middle, curvature, stop_signal
 
@@ -111,33 +106,3 @@ def make_decisiton_with(dc, dm, cur, stop_signal, contorller):
         contorller.finish_control()
     else:
         contorller.make_decision(dc, dm, cur)
-
-
-def main():
-    # to store the previous curves for left and right lane
-    w_left_previous, w_right_previous = np.zeros((3)), np.zeros((3))
-
-    # setup socket connection
-    cs = socket.socket()
-    cs.connect(('192.168.20.104', 8888))
-
-    # setup controller
-    contorller = Controller()
-
-    # try:
-    # create threads
-    send_img_thread = threading.Thread(target=send_img, args=(cs, contorller,))
-    recv_data_thread = threading.Thread(target=recv_data, args=(cs, contorller,))
-
-    # start all threads
-    send_img_thread.start()
-    recv_data_thread.start()
-
-    send_img_thread.join()
-    recv_data_thread.join()
-    print('--------- finish ---------')
-    contorller.cleanup()
-
-
-if __name__ == '__main__':
-    main()
