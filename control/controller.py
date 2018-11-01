@@ -53,14 +53,14 @@ class Controller(object):
         self.threshold_distance_error = 50
 
         # memory for storing states and actions
-        memory_size = 5000
-        self.memory_counter = 0
-        self.memory = np.zeros((memory_size, dim_state + 1))
+        # memory_size = 5000
+        # self.memory_counter = 0
+        # self.memory = np.zeros((memory_size, dim_state + 1))
 
     def finish_control(self):
         print('contorller: stop')
         self.motor.motor_stop()
-        np.save(join('.', 'record', 'memory_'), self.memory)
+        # np.save(join('.', 'record', 'memory_'), self.memory)
         np.save(join('.', 'record', 'dis_record'), self.dis_record)
 
     def choose_action_using_simple_logic(self, distance_to_center):
@@ -94,13 +94,13 @@ class Controller(object):
                 radian_at_tan
         """
         state = np.array([distance_2_tan, radian_at_tan])
-        cur_K_index = int(5 + floor(self.counter / 250))
-##        L = -28.0 # for clockwise
+        cur_K_index = 6
+        # cur_K_index = int(5 + floor(self.counter / 250))
         L = 0
         differential_drive = np.clip(-np.matmul(self.K_traj_trunc[cur_K_index,:,:], state) + L, -100.0, 100.0)
-        self.memory[self.memory_counter, :] = np.hstack([state, differential_drive])
+        # self.memory[self.memory_counter, :] = np.hstack([state, differential_drive])
         print('controller:', self.counter, cur_K_index, distance_2_tan)
-        self.memory_counter += 1
+        # self.memory_counter += 1
         pwm_mid = 50.0
         pwm_l_new = pwm_mid - differential_drive / 2
         pwm_r_new = pwm_mid + differential_drive / 2
