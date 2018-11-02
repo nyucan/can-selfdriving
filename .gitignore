@@ -1,7 +1,7 @@
 data/
 dateset/
 models/
-q-models/
+record/
 logs/
 comm/
 test-output/
