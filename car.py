@@ -60,25 +60,22 @@ class Car(object):
                     The recv buffer.
                     Note that the default recv size should be 112 (np.array(13, dtype=float64))
             @Returns:
-                image_id
-                distance_to_center
+                distance_to_tangent
+                angle_of_tangent
         """
-        num_of_paras = floor(len(buffer) / 112)
-        packaged_parameters = np.frombuffer(buffer, dtype=np.float64).reshape(14 * num_of_paras)
-        cur_paras = packaged_parameters[0:14]
+        num_of_paras = floor(len(buffer) / 128)
+        packaged_parameters = np.frombuffer(buffer, dtype=np.float64).reshape(int(16 * num_of_paras))
+        cur_paras = packaged_parameters[0:16]
         image_id = int(cur_paras[0])
-        w_left = cur_paras[1:4]
-        w_right = cur_paras[4:7]
-        w_middle = cur_paras[7:10]
-        distance_to_center = cur_paras[10]
-        distance_at_middle = cur_paras[11]
-        radian = cur_paras[12]
-        curvature = cur_paras[13]
+        w_left, w_right = cur_paras[1:4], cur_paras[4:7]
+        distance_to_tangent = cur_paras[14]
+        angle_of_tangent = cur_paras[15]
         stop_signal = (np.all(w_left == np.zeros(3)) and np.all(w_right == np.zeros(3)))
-        return image_id, distance_to_center, distance_at_middle, curvature, stop_signal
+        return image_id, distance_to_tangent, angle_of_tangent, stop_signal
 
     def send_images(self, connection, stream):
         """ Send images. Single thread, will block.
+            Helper function for online mode.
         """
         connection.write(struct.pack('<L', stream.tell()))
         connection.flush()
@@ -89,17 +86,18 @@ class Car(object):
 
     def recv_parameters(self, client_socket):
         """ Receive parameters from the server. Single thread, will block.
+            Helper function for online mode.
         """
         buffer = client_socket.recv(1024)
         if (buffer is not None):
-            img_id, dc, dm, cur, signal = Car.unpackage_paras_from_buffer(buffer)
+            img_id, d2t, aot, stop_signal = Car.unpackage_paras_from_buffer(buffer)
             if img_id <= self.pre_img_id:
                 return
             if stop_signal:
                 self.contorller.finish_control()
             else:
-                self.contorller.make_decision(dc, dm, cur)
-            self.pre_img_id = img_id  # update
+                self.contorller.make_decision(d2t, aot)
+            self.pre_img_id = img_id
 
     def run_offline(self):
         stream = io.BytesIO()
@@ -145,18 +143,19 @@ class Car(object):
                         self.contorller.finish_control()
                     else:
                         ## Turn left or turn right
-                        print('making desicion with ', dc, dm, radian_at_tan)
-                        self.contorller.make_decision(dc, dm, dis_2_tan, radian_at_tan)
+                        print('making desicion with ', dis_2_tan, radian_at_tan)
+                        self.contorller.make_decision(dis_2_tan, radian_at_tan)
                     stream.seek(0)
                     stream.truncate()
 
     def run_online(self, ip, port):
-        cs = socket.socket()
-        cs.connect((ip, port))
-        send_img_thread = threading.Thread(target=client.send_img, args=(cs, self.contorller,))
-        recv_data_thread = threading.Thread(target=client.recv_data, args=(cs, self.contorller,))
-        send_img_thread.start()
-        recv_data_thread.start()
+        pass
+    #     cs = socket.socket()
+    #     cs.connect((ip, port))
+    #     send_img_thread = threading.Thread(target=client.send_img, args=(cs, self.contorller,))
+    #     recv_data_thread = threading.Thread(target=client.recv_data, args=(cs, self.contorller,))
+    #     send_img_thread.start()
+    #     recv_data_thread.start()
 
     def run_online_alone(self, ip, port):
         client_socket = socket.socket()

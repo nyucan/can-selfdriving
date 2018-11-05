@@ -118,24 +118,24 @@ class Detector(object):
                     the car on the right: negative
                     the car on the left: positive
                 curvature_at_mid:      float64
+                distance_to_tangent:   float64
+                angle_of_tan:          float64
             returns `None` if there is no line at all!
         """
         w_left, w_right, w_mid = self.calc_fitting_weights(image)
-
         x_fitted = np.linspace(0, IMG_HEIGHT, NUMBER_OF_POINTS)
         poly_fit_mid = np.poly1d(w_mid)
         y_mid_fitted = poly_fit_mid(x_fitted)
         y_bottom = np.int(y_mid_fitted[-1])
-
         distance_to_center = y_bottom - IMAGE_CENTER
-        # compute curvature at some point x
-        # now, point x is in the middle (from height) of the lane centerline
         x_mid = np.int(x_fitted[int(NUMBER_OF_POINTS / 2)])
         y_mid = np.int(y_mid_fitted[int(NUMBER_OF_POINTS / 2)])
         distance_at_mid = y_mid - IMAGE_CENTER
         radian_to_center = ms.radian(distance_at_mid, IMAGE_CENTER)
         curvature_at_mid = ms.curvature(w_mid, x_mid, 2)
-        return w_left, w_right, w_mid, distance_to_center, distance_at_mid, radian_to_center, curvature_at_mid
+        distance_to_tangent, cut_point = Detector.get_distance_2_tan(w_mid)
+        angle_of_tangent = Detector.get_angle_of_tan(w_mid, cut_point)
+        return w_left, w_right, w_mid, distance_to_center, distance_at_mid, radian_to_center, curvature_at_mid, distance_to_tangent, angle_of_tangent
 
     def get_wrapped_all_parameters(self, image):
         """ Wrap the parameters.
@@ -147,10 +147,12 @@ class Detector(object):
                 [10]   :  dm
                 [11]   :  radian
                 [12]   :  curvature
+                [13]   :  distance to tangent
+                [14]   :  angle of tangent
         """
-        w_l, w_r, w_m, dc, dm, r, c = self.get_all_parameters(image)
+        w_l, w_r, w_m, dc, dm, r, c, d2t, aot = self.get_all_parameters(image)
         wrapped_parameters = np.array([], dtype=np.float64)
-        wrapped_parameters = np.concatenate((wrapped_parameters, w_l, w_r, w_m, [dc, dm, r, c]))
+        wrapped_parameters = np.concatenate((wrapped_parameters, w_l, w_r, w_m, [dc, dm, r, c, d2t, aot]))
         return wrapped_parameters
 
     @classmethod

@@ -68,7 +68,6 @@ class Server(object):
             if (new_img is None):
                 break
             new_img = img_process.standard_preprocess(new_img, f=False, binary=False)
-            img_process.show_img(new_img)
             print('Server: transmited image ' + str(image_id))
             packaged_parameters = self.predict_and_fit(image_id, new_img)
             print('Server: predicted and fitted image ' + str(image_id))
@@ -83,12 +82,11 @@ class Server(object):
         """
         # predict
         predicted_img = self.predictor.predict(image)
-        predicted_img = img_process.standard_preprocess(crop=False, down=False)
+        predicted_img = img_process.standard_preprocess(predicted_img, crop=False, down=False)
 
         # fit
         wrapped_parameters = self.detector.get_wrapped_all_parameters(predicted_img)
         debug_img = img_process.mark_image_with_parameters(image, wrapped_parameters, IMG_H, NUM_OF_POINTS)
-        # img_process.img_save(debug_img, './test-output/online/3/' + str(imageId) + '.png')
         img_process.show_img(debug_img)
         return wrapped_parameters
 

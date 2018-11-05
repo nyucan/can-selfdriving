@@ -87,11 +87,9 @@ class Controller(object):
         feature_sub = np.hstack((np.eye(1), s, s**2,[s[:,0]*s[:,1]])).transpose()
         return feature_sub
 
-    def make_decision(self, distance_to_center, distance_at_mid, distance_2_tan, radian_at_tan):
+    def make_decision(self, distance_2_tan, radian_at_tan):
         """ Make decision with a list of parameters.
             @paras
-                distance_to_center
-                distance_at_mid
                 distance_2_tan
                 radian_at_tan
         """
