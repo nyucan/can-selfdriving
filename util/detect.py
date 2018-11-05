@@ -125,7 +125,6 @@ class Detector(object):
         x_fitted = np.linspace(0, IMG_HEIGHT, NUMBER_OF_POINTS)
         poly_fit_mid = np.poly1d(w_mid)
         y_mid_fitted = poly_fit_mid(x_fitted)
-        # x_bottom = np.int(x_fitted[-1])
         y_bottom = np.int(y_mid_fitted[-1])
 
         distance_to_center = y_bottom - IMAGE_CENTER

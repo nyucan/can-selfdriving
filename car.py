@@ -8,7 +8,7 @@ import time
 import picamera
 import threading
 import socket
-from math import atan
+from math import atan, floor
 from os.path import join
 import numpy as np
 from PIL import Image
@@ -32,6 +32,8 @@ class Car(object):
     def __init__(self):
         self.contorller = Controller()
         self.detector = Detector()
+        self.pre_img_id = -1
+        self.clock = time.time()
 
     @staticmethod
     def unpackage_paras(packaged_parameters):
@@ -49,6 +51,55 @@ class Car(object):
         curvature = cur_paras[12]
         stop_signal = (np.all(w_left == np.zeros(3)) and np.all(w_right == np.zeros(3)))
         return distance_to_center, distance_at_middle, curvature, stop_signal
+
+    @staticmethod
+    def unpackage_paras_from_buffer(buffer):
+        """ Unpackage the parameters from buffer.
+            @Paras:
+                buffer: str
+                    The recv buffer.
+                    Note that the default recv size should be 112 (np.array(13, dtype=float64))
+            @Returns:
+                image_id
+                distance_to_center
+        """
+        num_of_paras = floor(len(buffer) / 112)
+        packaged_parameters = np.frombuffer(buffer, dtype=np.float64).reshape(14 * num_of_paras)
+        cur_paras = packaged_parameters[0:14]
+        image_id = int(cur_paras[0])
+        w_left = cur_paras[1:4]
+        w_right = cur_paras[4:7]
+        w_middle = cur_paras[7:10]
+        distance_to_center = cur_paras[10]
+        distance_at_middle = cur_paras[11]
+        radian = cur_paras[12]
+        curvature = cur_paras[13]
+        stop_signal = (np.all(w_left == np.zeros(3)) and np.all(w_right == np.zeros(3)))
+        return image_id, distance_to_center, distance_at_middle, curvature, stop_signal
+
+    def send_images(self, connection, stream):
+        """ Send images. Single thread, will block.
+        """
+        connection.write(struct.pack('<L', stream.tell()))
+        connection.flush()
+        stream.seek(0)
+        connection.write(stream.read())
+        stream.seek(0)
+        stream.truncate()
+
+    def recv_parameters(self, client_socket):
+        """ Receive parameters from the server. Single thread, will block.
+        """
+        buffer = client_socket.recv(1024)
+        if (buffer is not None):
+            img_id, dc, dm, cur, signal = Car.unpackage_paras_from_buffer(buffer)
+            if img_id <= self.pre_img_id:
+                return
+            if stop_signal:
+                self.contorller.finish_control()
+            else:
+                self.contorller.make_decision(dc, dm, cur)
+            self.pre_img_id = img_id  # update
 
     def run_offline(self):
         stream = io.BytesIO()
@@ -115,26 +166,15 @@ class Car(object):
             with picamera.PiCamera() as camera:
                 camera.resolution = (640, 480)
                 camera.framerate = 30
-                time.sleep(2)
-                start = time.time()
-                count = 0
+                time.sleep(1)
                 stream = io.BytesIO()
                 for foo in camera.capture_continuous(stream, 'jpeg', use_video_port=True):
-                    connection.write(struct.pack('<L', stream.tell()))
-                    connection.flush()
-                    stream.seek(0)
-                    connection.write(stream.read())
-                    count += 1
-                    if time.time() - start > 30:
-                        break
-                    stream.seek(0)
-                    stream.truncate()
+                    self.send_images(connection, stream)
+                    self.recv_parameters(client_socket)
             connection.write(struct.pack('<L', 0))
         finally:
             connection.close()
             client_socket.close()
-            finish = time.time()
-            print(finish - start)
 
     def stop(self):
         self.contorller.finish_control()
