@@ -16,6 +16,7 @@ class Controller(object):
         # self.init_memory()
         # self.init_record()
         self.K_im_traj = np.load('./control/K_traj_IM_VI.npy')
+        self.cur_K = -self.K_im_traj[-1]
         self.dis_sum = 0
 
     def init_record(self):
@@ -94,9 +95,9 @@ class Controller(object):
         """
         self.dis_sum += distance_2_tan
         state = np.array([distance_2_tan, radian_at_tan, self.dis_sum])
-        differential_drive = np.clip(-np.matmul(self.K_im_traj[-1], state), -100.0, 100.0)
+        differential_drive = np.clip(-np.matmul(self.cur_K, state), -100.0, 100.0)
         # self.memory[self.memory_counter, :] = np.hstack([state, differential_drive])
-        # print('controller:', self.counter, distance_2_tan)
+        print('controller:', distance_2_tan, radian_at_tan)
         # self.memory_counter += 1
         pwm_mid = 50.0
         pwm_l_new = pwm_mid - differential_drive / 2

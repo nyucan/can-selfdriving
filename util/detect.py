@@ -6,8 +6,8 @@ import os
 from os.path import join
 from glob import glob
 
-from detect_peaks import detect_peaks
-import math_support as ms
+from util.detect_peaks import detect_peaks
+import util.math_support as ms
 
 
 IMG_HEIGHT, IMG_WIDTH = 48, 160
@@ -126,12 +126,12 @@ class Detector(object):
         poly_fit_mid = np.poly1d(w_mid)
         y_mid_fitted = poly_fit_mid(x_fitted)
         y_bottom = np.int(y_mid_fitted[-1])
-        distance_to_center = y_bottom - IMAGE_CENTER
+        distance_to_center = IMAGE_CENTER - y_bottom
         x_mid = np.int(x_fitted[int(NUMBER_OF_POINTS / 2)])
         y_mid = np.int(y_mid_fitted[int(NUMBER_OF_POINTS / 2)])
-        distance_at_mid = y_mid - IMAGE_CENTER
-        radian_to_center = ms.radian(distance_at_mid, IMAGE_CENTER)
-        curvature_at_mid = ms.curvature(w_mid, x_mid, 2)
+        distance_at_mid = IMAGE_CENTER - y_mid
+        radian_to_center = - ms.radian(distance_at_mid, IMAGE_CENTER)
+        curvature_at_mid = - ms.curvature(w_mid, x_mid, 2)
         distance_to_tangent, cut_point = Detector.get_distance_2_tan(w_mid)
         angle_of_tangent = Detector.get_angle_of_tan(w_mid, cut_point)
         return w_left, w_right, w_mid, distance_to_center, distance_at_mid, radian_to_center, curvature_at_mid, distance_to_tangent, angle_of_tangent
@@ -166,9 +166,9 @@ class Detector(object):
         min_pt = (0, 0)
         for pt in pts:
             car_is_right = center_pt[0] - pt[0] > 0
-            sign = 1
+            sign = -1
             if not car_is_right:
-                sign = -1
+                sign = 1
             distance = ms.distance(pt, center_pt)
             if distance ** 2 < min_distance ** 2:
                 min_distance = sign * distance
@@ -182,7 +182,7 @@ class Detector(object):
                 w
                 pt: (w, h)
         """
-        return w[1] + 2 * w[0] * pt[1]
+        return -(w[1] + 2 * w[0] * pt[1])
 
     @classmethod
     def find_pixels_of_lane(cls, laneIMG_binary, lane_center, window_size, width_of_laneIMG_binary):

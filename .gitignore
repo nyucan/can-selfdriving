@@ -7,3 +7,4 @@ comm/
 test-output/
 .vscode
 *.pyc
+.DS_Store

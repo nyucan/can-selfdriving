@@ -115,12 +115,12 @@ class Car(object):
                     paras = self.detector.get_wrapped_all_parameters(image)
                     dc, dm, cur, ss = Car.unpackage_paras(paras)
                     dis_2_tan, pt = Detector.get_distance_2_tan(paras[6:9])
-                    angle_at_tan = Detector.get_angle_of_tan(paras[6:9], pt)
+                    angle_at_tan = paras[14]
                     radian_at_tan = atan(angle_at_tan)
                     ################# calculate points #################
                     w = paras[6:9]
                     delta_y = 15
-                    delta_x = angle_at_tan * delta_y
+                    delta_x = (-angle_at_tan) * delta_y
                     from_pt = (int(pt[0] - delta_x), pt[1] - delta_y)
                     to_pt = (int(pt[0] + delta_x), pt[1] + delta_y)
                     ################# visualize result #################
@@ -133,7 +133,7 @@ class Car(object):
                         img_process.mark_image_with_pt(debug_img, pt, (0, 255, 255))
                         print(dis_2_tan, atan(angle_at_tan))
                         img_process.mark_image_with_line(debug_img, from_pt, to_pt)
-                        debug_img = img_process.enlarge_img(debug_img, 6)
+                        debug_img = img_process.enlarge_img(debug_img, 4)
                         img_process.show_img(debug_img)
                     ####################################################
                     if first_start:

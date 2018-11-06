@@ -1,6 +1,6 @@
 configs = {
     'server': {
-        'ip': '192.168.1.2',
+        'ip': '192.168.1.3',
         'port': 8888,
         'multithread': False
     },
