@@ -1,6 +1,7 @@
 """ Preprocess the image before doing fitting job.
 """
 from __future__ import absolute_import, division, print_function
+from math import floor
 import cv2
 import numpy as np
 
@@ -12,7 +13,10 @@ def standard_preprocess(img, crop=True, down=True, f=True, binary=True):
     """ Perform filter operations to pre-process the image.
     """
     if crop:
-        img = crop_image(img, 0.45, 0.85)
+        # for offline
+        # img = crop_image(img, 0.45, 0.85)
+        # for online
+        img = crop_image(img, 0.40, 0.80)
     if down:
         img = down_sample(img, (160, 48))
     if f:

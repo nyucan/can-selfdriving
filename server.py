@@ -68,16 +68,19 @@ class Server(object):
             @return: image, left_parameters, left_parameters
         """
         # predict
-        _start_time = time()
-        predicted_img = self.predictor.predict(image)
-        predicted_img = img_process.standard_preprocess(predicted_img, crop=False, down=False)
-        print('prediction time: ', time() - _start_time)
+        # _start_time = time()
+        # predicted_img = self.predictor.predict(image)
+        # predicted_img = img_process.standard_preprocess(predicted_img, crop=False, down=False)
+        # print('prediction time: ', time() - _start_time)
 
         # fit
         _start_time = time()
-        wrapped_parameters = self.detector.get_wrapped_all_parameters(predicted_img)
+        processing_image = img_process.standard_preprocess(image, crop=False, down=False)
+        wrapped_parameters = self.detector.get_wrapped_all_parameters(processing_image)
+        # wrapped_parameters = self.detector.get_wrapped_all_parameters(predicted_img)
         print('fitting time: ', time() - _start_time)
         debug_img = img_process.mark_image_with_parameters(image, wrapped_parameters, IMG_H, NUM_OF_POINTS)
+        debug_img = img_process.enlarge_img(debug_img, 4)
         img_process.show_img(debug_img)
         return wrapped_parameters
 

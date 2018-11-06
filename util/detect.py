@@ -7,7 +7,6 @@ from os.path import join
 from glob import glob
 
 from detect_peaks import detect_peaks
-import util
 import math_support as ms
 
 

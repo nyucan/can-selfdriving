@@ -65,6 +65,8 @@ class Car(object):
         """
         num_of_paras = floor(len(buffer) / 128)
         packaged_parameters = np.frombuffer(buffer, dtype=np.float64).reshape(int(16 * num_of_paras))
+        if len(packaged_parameters) < 16:
+            return -1, 0, 0, False
         cur_paras = packaged_parameters[0:16]
         image_id = int(cur_paras[0])
         w_left, w_right = cur_paras[1:4], cur_paras[4:7]
