@@ -3,14 +3,17 @@ from time import sleep
 
 
 class Motor(object):
-    def __init__(self):
+    def __init__(self, slient=False):
         """ Set up GPIO environment.
         """
+        self.initGPIO()
+        self._slient = slient
+
+    def initGPIO(self):
         GPIO.setmode(GPIO.BCM)
         ENA, ENB = 26, 11
         IN1, IN2, IN3, IN4 = 19, 13, 6, 5
         sleep(1)
-
         #  Motor Pins
         GPIO.setup(ENA, GPIO.OUT) # ENA
         GPIO.setup(ENB, GPIO.OUT) # ENB
@@ -44,7 +47,8 @@ class Motor(object):
     def motor_set_new_speed(self, left, right):
         self.pwmL.ChangeDutyCycle(left)
         self.pwmR.ChangeDutyCycle(right)
-        print('Motor: ', 'pwm_l_new', left, 'pwm_r_new', right)
+        if not self._slient:
+            print('Motor: ', 'pwm_l_new', left, 'pwm_r_new', right)
 
     def motor_cleanup(self):
         GPIO.cleanup()

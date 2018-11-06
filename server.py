@@ -4,7 +4,7 @@ import socket
 import struct
 import numpy as np
 import cv2
-from time import sleep
+from time import sleep, time
 from PIL import Image
 
 from config import configs
@@ -30,17 +30,6 @@ class Server(object):
         self.s = self.server.accept()[0]
         self.connection = self.s.makefile('rb')
         print('server: new connection')
-
-    @staticmethod
-    def preprocess_image(image):
-        """ Perform filter operations to pre-process the image.
-        """
-        img_cropped = img_process.crop_image(image, 0.35, 0.75)
-        # print(img_cropped.shape)
-        # img_downsampled = img_process.down_sample(img_cropped, (160, 48))
-        # lane_img = img_process.lane_filter(img_downsampled, LOW_LANE_COLOR, UPPER_LANE_COLOR)
-        # bin_img = lane_img / 255
-        return img_cropped
 
     def recv_images(self):
         """ Get image from the server.
@@ -68,9 +57,7 @@ class Server(object):
             if (new_img is None):
                 break
             new_img = img_process.standard_preprocess(new_img, f=False, binary=False)
-            print('Server: transmited image ' + str(image_id))
             packaged_parameters = self.predict_and_fit(image_id, new_img)
-            print('Server: predicted and fitted image ' + str(image_id))
             packaged_parameters_with_id = np.concatenate(([image_id], packaged_parameters))
             s_packaged_parameters = packaged_parameters_with_id.tobytes()
             self.s.sendall(s_packaged_parameters)
@@ -81,11 +68,15 @@ class Server(object):
             @return: image, left_parameters, left_parameters
         """
         # predict
+        _start_time = time()
         predicted_img = self.predictor.predict(image)
         predicted_img = img_process.standard_preprocess(predicted_img, crop=False, down=False)
+        print('prediction time: ', time() - _start_time)
 
         # fit
+        _start_time = time()
         wrapped_parameters = self.detector.get_wrapped_all_parameters(predicted_img)
+        print('fitting time: ', time() - _start_time)
         debug_img = img_process.mark_image_with_parameters(image, wrapped_parameters, IMG_H, NUM_OF_POINTS)
         img_process.show_img(debug_img)
         return wrapped_parameters
@@ -93,13 +84,6 @@ class Server(object):
     def close_connection(self):
         self.connection.close()
         self.server.close()
-
-    @classmethod
-    def crop_image(cls, img, lower_bound, upper_bound):
-        """ Crop an image in the vertical direction with lower and upper bound.
-        """
-        img_cropped = img[int(img.shape[1]*lower_bound):int(img.shape[1]*upper_bound),:]
-        return img_cropped
 
 
 if __name__ == '__main__':

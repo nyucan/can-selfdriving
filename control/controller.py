@@ -12,10 +12,9 @@ from control.motor import Motor
 
 class Controller(object):
     def __init__(self):
-        self.motor = Motor()
-        self.init_memory()
-        self.init_record()
-        # self.K_traj_trunc = np.load('./control/K_traj_modified_VI.npy')
+        self.motor = Motor(slient=True)
+        # self.init_memory()
+        # self.init_record()
         self.K_im_traj = np.load('./control/K_traj_IM_VI.npy')
         self.dis_sum = 0
 
@@ -63,7 +62,7 @@ class Controller(object):
         print('contorller: stop')
         self.motor.motor_stop()
         # np.save(join('.', 'record', 'memory_'), self.memory)
-        np.save(join('.', 'record', 'dis_record'), self.dis_record)
+        # np.save(join('.', 'record', 'dis_record'), self.dis_record)
 
     def choose_action_using_simple_logic(self, distance_to_center):
         """ Naive policy to achive lane keeping, using simple rules.
@@ -94,46 +93,18 @@ class Controller(object):
                 radian_at_tan
         """
         self.dis_sum += distance_2_tan
-        cur_K_index = 1
-        cur_K_index = int(1 + floor(self.counter / 100))
         state = np.array([distance_2_tan, radian_at_tan, self.dis_sum])
-        differential_drive = np.clip(-np.matmul(self.K_im_traj[cur_K_index], state), -100.0, 100.0)
+        differential_drive = np.clip(-np.matmul(self.K_im_traj[-1], state), -100.0, 100.0)
         # self.memory[self.memory_counter, :] = np.hstack([state, differential_drive])
-        print('controller:', self.counter, distance_2_tan)
+        # print('controller:', self.counter, distance_2_tan)
         # self.memory_counter += 1
         pwm_mid = 50.0
         pwm_l_new = pwm_mid - differential_drive / 2
         pwm_r_new = pwm_mid + differential_drive / 2
         self.motor.motor_set_new_speed(pwm_l_new, pwm_r_new)
-        self.dis_record[self.counter] = distance_2_tan
-        self.counter += 1
-        if self.counter % 100 == 0:
-            np.save(join('.', 'record', 'dis_record'), self.dis_record)
-
-    # def make_decision_old(self, distance_to_center, distance_at_mid, distance_2_tan, radian_at_tan):
-    #     """ Make decision with a list of parameters.
-    #         @paras
-    #             distance_to_center
-    #             distance_at_mid
-    #             distance_2_tan
-    #             radian_at_tan
-    #     """
-    #     state = np.array([distance_2_tan, radian_at_tan])
-    #     cur_K_index = 6
-    #     # cur_K_index = int(5 + floor(self.counter / 250))
-    #     L = 0
-    #     differential_drive = np.clip(-np.matmul(self.K_traj_trunc[cur_K_index,:,:], state) + L, -100.0, 100.0)
-    #     # self.memory[self.memory_counter, :] = np.hstack([state, differential_drive])
-    #     print('controller:', self.counter, cur_K_index, distance_2_tan)
-    #     # self.memory_counter += 1
-    #     pwm_mid = 50.0
-    #     pwm_l_new = pwm_mid - differential_drive / 2
-    #     pwm_r_new = pwm_mid + differential_drive / 2
-    #     self.motor.motor_set_new_speed(pwm_l_new, pwm_r_new)
-    #     self.dis_record[self.counter] = distance_2_tan
-    #     self.counter += 1
-    #     if self.counter % 100 == 0:
-    #         np.save(join('.', 'record', 'dis_record'), self.dis_record)
+        # self.dis_record[self.counter] = distance_2_tan
+        # if self.counter % 100 == 0:
+        #     np.save(join('.', 'record', 'dis_record'), self.dis_record)
 
     def start(self):
         self.motor.motor_startup()

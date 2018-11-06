@@ -33,7 +33,7 @@ class Car(object):
         self.contorller = Controller()
         self.detector = Detector()
         self.pre_img_id = -1
-        self.clock = time.time()
+        self.cur_img_id = -1
 
     @staticmethod
     def unpackage_paras(packaged_parameters):
@@ -93,6 +93,7 @@ class Car(object):
             img_id, d2t, aot, stop_signal = Car.unpackage_paras_from_buffer(buffer)
             if img_id <= self.pre_img_id:
                 return
+            self.cur_img_id = img_id
             if stop_signal:
                 self.contorller.finish_control()
             else:
@@ -157,23 +158,27 @@ class Car(object):
     #     send_img_thread.start()
     #     recv_data_thread.start()
 
-    def run_online_alone(self, ip, port):
+    def run_online_single(self, ip, port):
         client_socket = socket.socket()
         client_socket.connect((ip, port))
         connection = client_socket.makefile('wb')
-        try:
-            with picamera.PiCamera() as camera:
-                camera.resolution = (640, 480)
-                camera.framerate = 30
-                time.sleep(1)
-                stream = io.BytesIO()
-                for foo in camera.capture_continuous(stream, 'jpeg', use_video_port=True):
-                    self.send_images(connection, stream)
-                    self.recv_parameters(client_socket)
-            connection.write(struct.pack('<L', 0))
-        finally:
-            connection.close()
-            client_socket.close()
+        first_start = True
+        with picamera.PiCamera() as camera:
+            camera.resolution = (640, 480)
+            camera.framerate = 30
+            time.sleep(1)
+            stream = io.BytesIO()
+            for foo in camera.capture_continuous(stream, 'jpeg', use_video_port=True):
+                start_time = time.time()
+                if first_start:
+                    self.contorller.start()
+                    first_start = False
+                self.send_images(connection, stream)
+                self.recv_parameters(client_socket)
+                print('processed img' + str(self.cur_img_id), time.time() - start_time)
+        connection.write(struct.pack('<L', 0))
+        connection.close()
+        client_socket.close()
 
     def stop(self):
         self.contorller.finish_control()

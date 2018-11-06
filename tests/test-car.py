@@ -25,10 +25,10 @@ def test_online_multithread(ip, addr):
         car.stop()
 
 
-def test_online_alone(ip, addr):
+def test_online_single(ip, addr):
     try:
         car = Car()
-        car.run_online_alone(ip, addr)
+        car.run_online_single(ip, addr)
     except KeyboardInterrupt:
         car.stop()
 
@@ -41,8 +41,8 @@ if __name__ == '__main__':
         print('running mode: ' + str(mode))
         if mode == 'online':
             test_online_multithread(configs['server']['ip'], configs['server']['port'])
-        elif mode == 'online-alone':
-            test_online_alone(configs['server']['ip'], configs['server']['port'])
+        elif mode == 'online-single':
+            test_online_single(configs['server']['ip'], configs['server']['port'])
         elif mode == 'offline':
             test_offline()
         else:
