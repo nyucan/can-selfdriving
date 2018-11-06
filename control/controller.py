@@ -102,6 +102,7 @@ class Controller(object):
         pwm_l_new = pwm_mid - differential_drive / 2
         pwm_r_new = pwm_mid + differential_drive / 2
         self.motor.motor_set_new_speed(pwm_l_new, pwm_r_new)
+        print(self.dis_sum)
         # self.dis_record[self.counter] = distance_2_tan
         # if self.counter % 100 == 0:
         #     np.save(join('.', 'record', 'dis_record'), self.dis_record)

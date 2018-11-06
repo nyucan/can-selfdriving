@@ -68,10 +68,10 @@ class Server(object):
             @return: image, left_parameters, left_parameters
         """
         # predict
-        # _start_time = time()
-        # predicted_img = self.predictor.predict(image)
-        # predicted_img = img_process.standard_preprocess(predicted_img, crop=False, down=False)
-        # print('prediction time: ', time() - _start_time)
+        _start_time = time()
+        processing_image = self.predictor.predict(image)
+        processing_image = img_process.standard_preprocess(processing_image, crop=False, down=False)
+        print('prediction time: ', time() - _start_time)
 
         # fit
         _start_time = time()
