@@ -1,4 +1,3 @@
-# python 2.7
 import cv2
 import numpy as np
 
@@ -6,8 +5,8 @@ import os
 from os.path import join
 from glob import glob
 
-from util.detect_peaks import detect_peaks
-import util.math_support as ms
+from .detect_peaks import detect_peaks
+from . import math_support
 
 
 IMG_HEIGHT, IMG_WIDTH = 48, 160
@@ -130,8 +129,8 @@ class Detector(object):
         x_mid = np.int(x_fitted[int(NUMBER_OF_POINTS / 2)])
         y_mid = np.int(y_mid_fitted[int(NUMBER_OF_POINTS / 2)])
         distance_at_mid = IMAGE_CENTER - y_mid
-        radian_to_center = - ms.radian(distance_at_mid, IMAGE_CENTER)
-        curvature_at_mid = - ms.curvature(w_mid, x_mid, 2)
+        radian_to_center = - math_support.radian(distance_at_mid, IMAGE_CENTER)
+        curvature_at_mid = - math_support.curvature(w_mid, x_mid, 2)
         distance_to_tangent, cut_point = Detector.get_distance_2_tan(w_mid)
         angle_of_tangent = Detector.get_angle_of_tan(w_mid, cut_point)
         return w_left, w_right, w_mid, distance_to_center, distance_at_mid, radian_to_center, curvature_at_mid, distance_to_tangent, angle_of_tangent
@@ -169,7 +168,7 @@ class Detector(object):
             sign = -1
             if not car_is_right:
                 sign = 1
-            distance = ms.distance(pt, center_pt)
+            distance = math_support.distance(pt, center_pt)
             if distance ** 2 < min_distance ** 2:
                 min_distance = sign * distance
                 min_pt = pt

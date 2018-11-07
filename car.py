@@ -170,13 +170,13 @@ class Car(object):
             camera.framerate = 30
             time.sleep(1)
             stream = io.BytesIO()
-            for foo in camera.capture_continuous(stream, 'jpeg', use_video_port=True):
+            for _ in camera.capture_continuous(stream, 'jpeg', use_video_port=True):
                 start_time = time.time()
+                self.send_images(connection, stream)
+                self.recv_parameters(client_socket)
                 if first_start:
                     self.contorller.start()
                     first_start = False
-                self.send_images(connection, stream)
-                self.recv_parameters(client_socket)
                 print('processed img' + str(self.cur_img_id), time.time() - start_time)
         connection.write(struct.pack('<L', 0))
         connection.close()
