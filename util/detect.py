@@ -67,12 +67,10 @@ class Detector(object):
                 w_mid:                 np.array
         """
         lane_center_left, lane_center_right = self.find_lane_centers(bin_img)
-
         w_left, w_right, w_mid = self.w_left_previous, self.w_right_previous, np.zeros(3)
 
         if (lane_center_left is None and lane_center_right is None):
             print('Detect: End of the trial: No lines')
-            # return [0 ... 0]
             return  np.zeros(3), np.zeros(3), np.zeros(3)
         else:
             if lane_center_left is not None:
@@ -81,9 +79,13 @@ class Detector(object):
                     w_left = np.polyfit(x_left, y_left, POLY_ORDER)
                     self.w_left_previous = w_left
                 except ValueError:
-                        w_left = self.w_left_previous
+                    print('Detector: Value Error!!!')
+                    w_left = self.w_left_previous
                 except np.RankWarning:
                     print('Detector: Rank Warning!!!')
+                    w_left = self.w_left_previous
+                except:
+                    print('Detector: Other Error!!!')
                     w_left = self.w_left_previous
             if lane_center_right is not None:
                 x_right, y_right = Detector.find_pixels_of_lane(bin_img, lane_center_right, WINDOW_SIZE, IMG_WIDTH)
@@ -91,9 +93,13 @@ class Detector(object):
                     w_right = np.polyfit(x_right, y_right, POLY_ORDER)
                     self.w_right_previous = w_right
                 except ValueError:
-                        w_right = self.w_right_previous
+                    print('Detector: Value Error!!!')
+                    w_right = self.w_right_previous
                 except np.RankWarning:
                     print('Detector: Rank Warning!!!')
+                    w_right = self.w_right_previous
+                except:
+                    print('Detector: Other Error!!!')
                     w_right = self.w_right_previous
             # if lane_center_left is not None and lane_center_right is not None:
             w_mid = (w_left + w_right) / 2

@@ -108,34 +108,20 @@ class Car(object):
         first_start = True
         with picamera.PiCamera(resolution='VGA') as camera:
             with io.BytesIO() as stream:
-                for frame in camera.capture_continuous(stream, format='jpeg', use_video_port=True):
+                for _ in camera.capture_continuous(stream, format='jpeg', use_video_port=True):
                     stream.seek(0)
                     ori_image = np.array(Image.open(stream))
                     image = img_process.standard_preprocess(ori_image)
                     paras = self.detector.get_wrapped_all_parameters(image)
                     dc, dm, cur, ss = Car.unpackage_paras(paras)
                     dis_2_tan, pt = Detector.get_distance_2_tan(paras[6:9])
-                    angle_at_tan = paras[14]
-                    radian_at_tan = atan(angle_at_tan)
-                    ################# calculate points #################
-                    w = paras[6:9]
-                    delta_y = 15
-                    delta_x = (-angle_at_tan) * delta_y
-                    from_pt = (int(pt[0] - delta_x), pt[1] - delta_y)
-                    to_pt = (int(pt[0] + delta_x), pt[1] + delta_y)
-                    ################# visualize result #################
+                    # angle_at_tan = paras[14]
+                    radian_at_tan = atan(paras[14])
                     # display the fitting result in real time
                     if configs['debug']:
-                        debug_img = img_process.crop_image(ori_image, configs['data']['crop_part'][0], configs['data']['crop_part'][1])
-                        debug_img = img_process.down_sample(debug_img, (IMG_W, IMG_H))
-                        debug_img = img_process.mark_image_with_parameters(debug_img, paras, IMG_H, NUM_OF_POINTS)
-                        img_process.mark_image_with_pt(debug_img, (CENTER_W, CENTER_H), (0, 255, 0))
-                        img_process.mark_image_with_pt(debug_img, pt, (0, 255, 255))
-                        print(dis_2_tan, atan(angle_at_tan))
-                        img_process.mark_image_with_line(debug_img, from_pt, to_pt)
-                        debug_img = img_process.enlarge_img(debug_img, 4)
+                        cut_from, cut_to = configs['data']['crop_part'][0], configs['data']['crop_part'][1]
+                        debug_img = img_process.compute_debug_image(ori_image, cut_from, cut_to, IMG_W, IMG_H, NUM_OF_POINTS, pt, paras)
                         img_process.show_img(debug_img)
-                    ####################################################
                     if first_start:
                         self.contorller.start()
                         first_start = False
@@ -177,7 +163,7 @@ class Car(object):
                 if first_start:
                     self.contorller.start()
                     first_start = False
-                print('processed img' + str(self.cur_img_id), time.time() - start_time)
+                print('processed img ' + str(self.cur_img_id), time.time() - start_time)
         connection.write(struct.pack('<L', 0))
         connection.close()
         client_socket.close()

@@ -52,7 +52,7 @@ def img_save(img, path):
 def down_sample(img, target_size):
     """ Downsample the image to target size.
     """
-    if img.shape[0] <= target_size[0] or img.shape[1] <= target_size[1]:
+    if img.shape[0] <= target_size[1] or img.shape[1] <= target_size[0]:
         print('target size should be small than original size')
         return img
     else:
@@ -89,8 +89,10 @@ def calc_fitting_pts(w, x):
 def mark_image_with_pt(img, pt, color):
     cv2.circle(img, (pt[0], pt[1]), 3, color)
 
+
 def mark_image_with_line(img, pt_from, pt_to):
     cv2.line(img, pt_from, pt_to, (255, 0, 255), 1)
+
 
 def mark_image_with_parameters(img, parameters, img_height, num_of_p):
     """ Fit the image.
@@ -107,3 +109,18 @@ def mark_image_with_parameters(img, parameters, img_height, num_of_p):
     cv2.polylines(img, [pts_list[1]], False, (0, 255, 255), 1)
     cv2.polylines(img, [pts_list[2]], False, (0, 255, 0), 1)
     return img
+
+
+def compute_debug_image(ori_image, crop_from, crop_to, width, height, num_of_pts, cut_pt, paras):
+    delta_y = 15
+    delta_x = (-paras[14]) * delta_y
+    from_pt = (int(cut_pt[0] - delta_x), cut_pt[1] - delta_y)
+    to_pt = (int(cut_pt[0] + delta_x), cut_pt[1] + delta_y)
+    cw, ch = int(width / 2), int(height / 2)
+    debug_img = crop_image(ori_image, crop_from, crop_to)
+    # debug_img = down_sample(debug_img, (width, height))
+    debug_img = mark_image_with_parameters(debug_img, paras, height, num_of_pts)
+    mark_image_with_pt(debug_img, (cw, ch), (0, 255, 0))
+    mark_image_with_pt(debug_img, cut_pt, (0, 255, 255))
+    mark_image_with_line(debug_img, from_pt, to_pt)
+    return enlarge_img(debug_img, 4)

@@ -18,6 +18,7 @@ class Controller(object):
         self.K_im_traj = np.load('./control/K_traj_IM_VI.npy')
         self.cur_K = -self.K_im_traj[-1]
         self.dis_sum = 0
+        self.threshold = 500
 
     def init_record(self):
         self.counter = 0
@@ -93,7 +94,8 @@ class Controller(object):
                 distance_2_tan
                 radian_at_tan
         """
-        self.dis_sum += distance_2_tan
+        if abs(self.dis_sum + distance_2_tan) < self.threshold:        
+            self.dis_sum += distance_2_tan
         state = np.array([distance_2_tan, radian_at_tan, self.dis_sum])
         differential_drive = np.clip(-np.matmul(self.cur_K, state), -100.0, 100.0)
         # self.memory[self.memory_counter, :] = np.hstack([state, differential_drive])

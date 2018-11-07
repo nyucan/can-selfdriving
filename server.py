@@ -26,7 +26,6 @@ class Server(object):
         self.server.bind(('0.0.0.0', 8888))
         self.server.listen(0)
         print('server: waitting for connection')
-
         self.s = self.server.accept()[0]
         self.connection = self.s.makefile('rb')
         print('server: new connection')
@@ -65,23 +64,25 @@ class Server(object):
 
     def predict_and_fit(self, imageId, image):
         """ Make prediction and then fit the predicted image.
-            @return: image, left_parameters, left_parameters
+            @return: wrapped_parameters
         """
         # predict
         _start_time = time()
-        processing_image = self.predictor.predict(image)
-        processing_image = img_process.standard_preprocess(processing_image, crop=False, down=False)
+        predicted_image = self.predictor.predict(image)
+        processed_image = img_process.standard_preprocess(predicted_image, crop=False, down=False)
         print('prediction time: ', time() - _start_time)
 
         # fit
         _start_time = time()
-        processing_image = img_process.standard_preprocess(image, crop=False, down=False)
-        wrapped_parameters = self.detector.get_wrapped_all_parameters(processing_image)
-        # wrapped_parameters = self.detector.get_wrapped_all_parameters(predicted_img)
+        wrapped_parameters = self.detector.get_wrapped_all_parameters(processed_image)
         print('fitting time: ', time() - _start_time)
-        debug_img = img_process.mark_image_with_parameters(image, wrapped_parameters, IMG_H, NUM_OF_POINTS)
-        debug_img = img_process.enlarge_img(debug_img, 4)
-        img_process.show_img(debug_img)
+
+        if configs['debug']:
+            _, pt = Detector.get_distance_2_tan(wrapped_parameters[6:9])
+            img1 = img_process.compute_debug_image(image, 0, 1, IMG_W, IMG_H, NUM_OF_POINTS, pt, wrapped_parameters)
+            img2 = img_process.compute_debug_image(predicted_image, 0, 1, IMG_W, IMG_H, NUM_OF_POINTS, pt, wrapped_parameters)
+            debug_image = np.concatenate((img1, img2), axis=0)
+            img_process.show_img(debug_image)
         return wrapped_parameters
 
     def close_connection(self):
