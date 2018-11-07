@@ -111,15 +111,13 @@ def mark_image_with_parameters(img, parameters, img_height, num_of_p):
     return img
 
 
-def compute_debug_image(ori_image, crop_from, crop_to, width, height, num_of_pts, cut_pt, paras):
+def compute_debug_image(image, width, height, num_of_pts, cut_pt, paras):
     delta_y = 15
     delta_x = (-paras[14]) * delta_y
     from_pt = (int(cut_pt[0] - delta_x), cut_pt[1] - delta_y)
     to_pt = (int(cut_pt[0] + delta_x), cut_pt[1] + delta_y)
     cw, ch = int(width / 2), int(height / 2)
-    debug_img = crop_image(ori_image, crop_from, crop_to)
-    # debug_img = down_sample(debug_img, (width, height))
-    debug_img = mark_image_with_parameters(debug_img, paras, height, num_of_pts)
+    debug_img = mark_image_with_parameters(image, paras, height, num_of_pts)
     mark_image_with_pt(debug_img, (cw, ch), (0, 255, 0))
     mark_image_with_pt(debug_img, cut_pt, (0, 255, 255))
     mark_image_with_line(debug_img, from_pt, to_pt)

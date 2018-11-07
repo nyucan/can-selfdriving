@@ -111,7 +111,8 @@ class Car(object):
                 for _ in camera.capture_continuous(stream, format='jpeg', use_video_port=True):
                     stream.seek(0)
                     ori_image = np.array(Image.open(stream))
-                    image = img_process.standard_preprocess(ori_image)
+                    ori_image = img_process.standard_preprocess(ori_image, crop=True, down=True, f=False, binary=False)
+                    image = img_process.standard_preprocess(ori_image, crop=False, down=False, f=True, binary=True)
                     paras = self.detector.get_wrapped_all_parameters(image)
                     dc, dm, cur, ss = Car.unpackage_paras(paras)
                     dis_2_tan, pt = Detector.get_distance_2_tan(paras[6:9])
@@ -119,8 +120,7 @@ class Car(object):
                     radian_at_tan = atan(paras[14])
                     # display the fitting result in real time
                     if configs['debug']:
-                        cut_from, cut_to = configs['data']['crop_part'][0], configs['data']['crop_part'][1]
-                        debug_img = img_process.compute_debug_image(ori_image, cut_from, cut_to, IMG_W, IMG_H, NUM_OF_POINTS, pt, paras)
+                        debug_img = img_process.compute_debug_image(ori_image, IMG_W, IMG_H, NUM_OF_POINTS, pt, paras)
                         img_process.show_img(debug_img)
                     if first_start:
                         self.contorller.start()

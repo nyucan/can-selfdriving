@@ -79,8 +79,8 @@ class Server(object):
 
         if configs['debug']:
             _, pt = Detector.get_distance_2_tan(wrapped_parameters[6:9])
-            img1 = img_process.compute_debug_image(image, 0, 1, IMG_W, IMG_H, NUM_OF_POINTS, pt, wrapped_parameters)
-            img2 = img_process.compute_debug_image(predicted_image, 0, 1, IMG_W, IMG_H, NUM_OF_POINTS, pt, wrapped_parameters)
+            img1 = img_process.compute_debug_image(image, IMG_W, IMG_H, NUM_OF_POINTS, pt, wrapped_parameters)
+            img2 = img_process.compute_debug_image(predicted_image, IMG_W, IMG_H, NUM_OF_POINTS, pt, wrapped_parameters)
             debug_image = np.concatenate((img1, img2), axis=0)
             img_process.show_img(debug_image)
         return wrapped_parameters
