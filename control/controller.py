@@ -96,7 +96,7 @@ class Controller(object):
                 distance_2_tan
                 radian_at_tan
         """
-        # if abs(self.dis_sum + distance_2_tan) < self.threshold:        
+        # if abs(self.dis_sum + distance_2_tan) < self.threshold:
         self.dis_sum += distance_2_tan
         state = np.array([distance_2_tan, radian_at_tan, self.dis_sum])
         differential_drive = np.clip(-np.matmul(self.cur_K, state), -100.0, 100.0)
@@ -121,7 +121,7 @@ class Controller(object):
     #             distance_2_tan
     #             radian_at_tan
     #     """
-    #     if abs(self.dis_sum + distance_2_tan) < self.threshold:        
+    #     if abs(self.dis_sum + distance_2_tan) < self.threshold:
     #         self.dis_sum += distance_2_tan
     #     state = np.array([distance_2_tan, radian_at_tan, self.dis_sum])
     #     differential_drive = np.clip(-np.matmul(self.cur_K, state), -100.0, 100.0)
