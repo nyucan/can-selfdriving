@@ -14,9 +14,9 @@ def standard_preprocess(img, crop=True, down=True, f=True, binary=True):
     """
     if crop:
         # for offline
-        # img = crop_image(img, 0.45, 0.85)
+        img = crop_image(img, 0.45, 0.85)
         # for online
-        img = crop_image(img, 0.40, 0.80)
+        # img = crop_image(img, 0.40, 0.80)
     if down:
         img = down_sample(img, (160, 48))
     if f:
