@@ -181,11 +181,7 @@ class Detector(object):
             sign = -1
             if not car_is_right:
                 sign = 1
-<<<<<<< Updated upstream
             distance = math_support.distance(pt, center_pt)
-=======
-            distance = ms.distance(pt, center_pt)
->>>>>>> Stashed changes
             if distance ** 2 < min_distance ** 2:
                 min_distance = sign * distance
                 min_pt = pt

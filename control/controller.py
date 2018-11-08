@@ -16,7 +16,7 @@ class Controller(object):
         # self.init_memory()
         self.init_record()
         self.K_im_traj = np.load('./control/K_traj_IM_VI.npy')
-        self.cur_K = -self.K_im_traj[-1]
+        self.cur_K = -self.K_im_traj[9]
         # self.cur_K = np.array([6, 0, 0])
         self.dis_sum = 0
         self.threshold = 500
@@ -114,6 +114,7 @@ class Controller(object):
         if self.counter % 100 == 0:
             np.save(join('.', 'record', 'record'), np.array(self.record))
         self.counter += 1
+        print(self.counter)
 
     # def make_decision(self, distance_2_tan, radian_at_tan):
     #     """ Make decision with a list of parameters.
