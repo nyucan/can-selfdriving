@@ -61,3 +61,13 @@ def distance(pt_a, pt_b):
             pt_b: (x, y)
     """
     return math.sqrt((pt_a[0] - pt_b[0])**2 + (pt_a[1] - pt_b[1])**2)
+
+
+def e_diff(w_1, w_2):
+    if len(w_1) != len(w_2):
+        print('size not match')
+        return -1
+    s = 0
+    for i, w in enumerate(w_1):
+        s += (w - w_2[i]) ** 2
+    return math.sqrt(s)

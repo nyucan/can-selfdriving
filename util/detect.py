@@ -26,6 +26,7 @@ class Detector(object):
         # initialize the lane_peaks_previous
         self.left_peak_previous, self.right_peak_previous = 0, IMG_WIDTH
         # to store the previous curves for left and right lane
+        self.is_init = True
         self.w_left_previous, self.w_right_previous = np.zeros((3)), np.zeros((3))
 
     def find_lane_centers(self, laneIMG_binary):
@@ -68,6 +69,7 @@ class Detector(object):
         """
         lane_center_left, lane_center_right = self.find_lane_centers(bin_img)
         w_left, w_right, w_mid = self.w_left_previous, self.w_right_previous, np.zeros(3)
+        use_new_left, use_new_right = False, False
 
         if (lane_center_left is None and lane_center_right is None):
             print('Detect: End of the trial: No lines')
@@ -77,31 +79,36 @@ class Detector(object):
                 x_left, y_left = Detector.find_pixels_of_lane(bin_img, lane_center_left, WINDOW_SIZE, IMG_WIDTH)
                 try:
                     w_left = np.polyfit(x_left, y_left, POLY_ORDER)
-                    self.w_left_previous = w_left
-                except ValueError:
-                    print('Detector: Value Error!!!')
-                    w_left = self.w_left_previous
-                except np.RankWarning:
-                    print('Detector: Rank Warning!!!')
-                    w_left = self.w_left_previous
+                    use_new_left = True
+                    # self.w_left_previous = w_left
                 except:
-                    print('Detector: Other Error!!!')
+                    print('Detector: Error!!!')
                     w_left = self.w_left_previous
             if lane_center_right is not None:
                 x_right, y_right = Detector.find_pixels_of_lane(bin_img, lane_center_right, WINDOW_SIZE, IMG_WIDTH)
                 try:
                     w_right = np.polyfit(x_right, y_right, POLY_ORDER)
-                    self.w_right_previous = w_right
-                except ValueError:
-                    print('Detector: Value Error!!!')
-                    w_right = self.w_right_previous
-                except np.RankWarning:
-                    print('Detector: Rank Warning!!!')
-                    w_right = self.w_right_previous
+                    use_new_right = True
+                    # self.w_right_previous = w_right
                 except:
-                    print('Detector: Other Error!!!')
+                    print('Detector: Error!!!')
                     w_right = self.w_right_previous
             # if lane_center_left is not None and lane_center_right is not None:
+            THRESHOLD = 1000
+            print('diff', math_support.e_diff(w_left, self.w_left_previous), math_support.e_diff(w_right, self.w_right_previous))
+            if self.is_init:
+                self.is_init = False
+                self.w_left_previous = w_left
+                self.w_right_previous = w_right
+            else:
+                if math_support.e_diff(w_left, self.w_left_previous) > THRESHOLD or not use_new_left:
+                    w_left = self.w_left_previous
+                else:
+                    self.w_left_previous = w_left
+                if math_support.e_diff(w_right, self.w_right_previous) > THRESHOLD or not use_new_right:
+                    w_right = self.w_right_previous
+                else:
+                    self.w_right_previous = w_right
             w_mid = (w_left + w_right) / 2
         return w_left, w_right, w_mid
 
