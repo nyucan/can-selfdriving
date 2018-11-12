@@ -76,7 +76,10 @@ def show_img(img, is_bin=False):
     if is_bin:
         # restore
         pass
-    cv2.imshow("image", img)
+    winname = "Test"
+    cv2.namedWindow(winname)        # Create a named window
+    cv2.moveWindow(winname, 40,30)  # Move it to (40,30)
+    cv2.imshow(winname, img)
     cv2.waitKey(10)
 
 
