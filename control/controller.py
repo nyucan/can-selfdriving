@@ -112,16 +112,21 @@ class Controller(object):
         pwm_l_new = pwm_mid - differential_drive / 2
         pwm_r_new = pwm_mid + differential_drive / 2
         # self.motor.motor_set_new_speed(pwm_l_new, pwm_r_new)
-        if start_time - time() < 10:
-            self.motor.motor_set_new_speed(80,30)
-        elif start_time - time() < 20:
-            self.motor.motor_set_new_speed(30, 80)
-        elif start_time - time() <30:
-            self.motor.motor_set_new_speed(80,30)
-        elif start_time - time() <40:
-            self.motor.motor_set_new_speed(30,80)
+        if time() - start_time < 2:
+            self.motor.motor_set_new_speed(60,45)
+            print('1')
+        elif time() - start_time < 5:
+            self.motor.motor_set_new_speed(100, 25)
+            print('2')
+        elif time() - start_time < 8:
+            self.motor.motor_set_new_speed(40,80)
+            print('3')
+        elif time() - start_time < 10.5:
+            self.motor.motor_set_new_speed(100,25)
+            print('4')
         else:
             self.motor.motor_set_new_speed(60,45)
+            print('5')
         # self.record.append((distance_2_tan, radian_at_tan, self.dis_sum, differential_drive))
         # check point
         # if self.counter % 100 == 0:
