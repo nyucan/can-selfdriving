@@ -89,13 +89,15 @@ class Controller(object):
         feature_sub = np.hstack((np.eye(1), s, s**2,[s[:,0]*s[:,1]])).transpose()
         return feature_sub
 
-    def make_decision(self, distance_2_tan, radian_at_tan):
+    def make_decision(self, distance_2_tan, radian_at_tan, start_time):
         """ Make decision with a list of parameters.
             @paras
                 distance_2_tan
                 radian_at_tan
         """
         # cur_k_index = int((c) / 20) * 1 + 3
+        # self.counter = self.counter+1
+        self.counter += 1
         cur_k_index = -1
         self.cur_K = -self.K_im_traj[cur_k_index]
         
@@ -109,13 +111,22 @@ class Controller(object):
         pwm_mid = 50.0
         pwm_l_new = pwm_mid - differential_drive / 2
         pwm_r_new = pwm_mid + differential_drive / 2
-        self.motor.motor_set_new_speed(pwm_l_new, pwm_r_new)
-
-        self.record.append((distance_2_tan, radian_at_tan, self.dis_sum, differential_drive))
+        # self.motor.motor_set_new_speed(pwm_l_new, pwm_r_new)
+        if start_time - time.time() < 10:
+            self.motor.motor_set_new_speed(80,30)
+        elif start_time - time.time() < 20:
+            self.motor.motor_set_new_speed(30, 80)
+        elif start_time - time.time() <30:
+            self.motor.motor_set_new_speed(80,30)
+        elif start_time - time.time() <40:
+            self.motor.motor_set_new_speed(30,80)
+        else:
+            self.motor.motor_set_new_speed(60,45)
+        # self.record.append((distance_2_tan, radian_at_tan, self.dis_sum, differential_drive))
         # check point
         # if self.counter % 100 == 0:
         #     np.save(join('.', 'record', 'record'), np.array(self.record))
-        self.counter += 1
+        # self.counter += 1
         print(time() - self._start_time)
 
     def start(self):
