@@ -124,6 +124,7 @@ class Car(object):
                         img_process.show_img(debug_img)
                     if first_start:
                         self.contorller.start()
+                        startT = time.time()
                         first_start = False
                     # Control the car according to the parameters
                     if ss:
@@ -131,11 +132,11 @@ class Car(object):
                         # print('------- stop -------')
                         print('---------turn---------')
                         # self.contorller.finish_control()
-                        self.contorller.make_decision(0,0)
+                        self.contorller.make_decision(0,0,startT)
                     else:
                         ## Turn left or turn right
                         print('making desicion with ', dis_2_tan, radian_at_tan)
-                        self.contorller.make_decision(dis_2_tan, radian_at_tan)
+                        self.contorller.make_decision(dis_2_tan, radian_at_tan, startT)
                     stream.seek(0)
                     stream.truncate()
 
