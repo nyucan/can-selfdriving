@@ -112,13 +112,13 @@ class Controller(object):
         pwm_l_new = pwm_mid - differential_drive / 2
         pwm_r_new = pwm_mid + differential_drive / 2
         # self.motor.motor_set_new_speed(pwm_l_new, pwm_r_new)
-        if start_time - time.time() < 10:
+        if start_time - time() < 10:
             self.motor.motor_set_new_speed(80,30)
-        elif start_time - time.time() < 20:
+        elif start_time - time() < 20:
             self.motor.motor_set_new_speed(30, 80)
-        elif start_time - time.time() <30:
+        elif start_time - time() <30:
             self.motor.motor_set_new_speed(80,30)
-        elif start_time - time.time() <40:
+        elif start_time - time() <40:
             self.motor.motor_set_new_speed(30,80)
         else:
             self.motor.motor_set_new_speed(60,45)
