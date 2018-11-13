@@ -128,8 +128,10 @@ class Car(object):
                     # Control the car according to the parameters
                     if ss:
                         ## Stop the car
-                        print('------- stop -------')
-                        self.contorller.finish_control()
+                        # print('------- stop -------')
+                        print('---------turn---------')
+                        # self.contorller.finish_control()
+                        self.contorller.make_decision(0,0)
                     else:
                         ## Turn left or turn right
                         print('making desicion with ', dis_2_tan, radian_at_tan)

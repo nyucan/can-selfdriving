@@ -116,29 +116,29 @@ class Controller(object):
         self.counter += 1
         print(self.counter)
 
-    # def make_decision(self, distance_2_tan, radian_at_tan):
-    #     """ Make decision with a list of parameters.
-    #         @paras
-    #             distance_2_tan
-    #             radian_at_tan
-    #     """
-    #     if abs(self.dis_sum + distance_2_tan) < self.threshold:
-    #         self.dis_sum += distance_2_tan
-    #     state = np.array([distance_2_tan, radian_at_tan, self.dis_sum])
-    #     differential_drive = np.clip(-np.matmul(self.cur_K, state), -100.0, 100.0)
-    #     # self.memory[self.memory_counter, :] = np.hstack([state, differential_drive])
-    #     print('controller:', distance_2_tan, radian_at_tan)
-    #     # self.memory_counter += 1
-    #     pwm_mid = 50.0
-    #     pwm_l_new = pwm_mid - differential_drive / 2
-    #     pwm_r_new = pwm_mid + differential_drive / 2
-    #     self.motor.motor_set_new_speed(pwm_l_new, pwm_r_new)
-
-    #     self.dis_record.append(distance_2_tan)
-    #     # check point
-    #     if self.counter % 100 == 0:
-    #         np.save(join('.', 'record', 'dis_record'), np.array(self.dis_record))
-    #     self.counter += 1
+    def make_decision(self, distance_2_tan, radian_at_tan):
+        """ Make decision with a list of parameters.
+            @paras
+                distance_2_tan
+                radian_at_tan
+        """
+        if abs(self.dis_sum + distance_2_tan) < self.threshold:
+            self.dis_sum += distance_2_tan
+        state = np.array([distance_2_tan, radian_at_tan, self.dis_sum])
+        differential_drive = np.clip(-np.matmul(self.cur_K, state), -100.0, 100.0)
+        # self.memory[self.memory_counter, :] = np.hstack([state, differential_drive])
+        print('controller:', distance_2_tan, radian_at_tan)
+        # self.memory_counter += 1
+        pwm_mid = 50.0
+        pwm_l_new = pwm_mid - differential_drive / 2
+        pwm_r_new = pwm_mid + differential_drive / 2
+        # self.motor.motor_set_new_speed(pwm_l_new, pwm_r_new)
+        self.motor.motor_set_new_speed(60,45)
+        self.dis_record.append(distance_2_tan)
+        # check point
+        if self.counter % 100 == 0:
+            np.save(join('.', 'record', 'dis_record'), np.array(self.dis_record))
+        self.counter += 1
 
     def start(self):
         self.motor.motor_startup()
