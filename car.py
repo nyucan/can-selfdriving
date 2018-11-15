@@ -14,6 +14,8 @@ import numpy as np
 from PIL import Image
 
 from control.controller import Controller
+from control.car_avoid import CarAvoid
+from control.processImage import processImage
 from util.detect import Detector
 from util import img_process
 from config import configs
@@ -129,9 +131,8 @@ class Car(object):
                     # Control the car according to the parameters
                     if ss:
                         ## Stop the car
-                        # print('------- stop -------')
-                        print('---------turn---------')
-                        # self.contorller.finish_control()
+                        print('------- stop -------')
+                        self.contorller.finish_control()
                         self.contorller.make_decision(0,0,startT)
                     else:
                         ## Turn left or turn right
