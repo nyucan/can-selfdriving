@@ -14,7 +14,7 @@ import numpy as np
 from PIL import Image
 
 from control.controller import Controller
-from control.car_avoid import CarAvoid
+# from control.car_avoid import CarAvoid
 from control.processImage import processImage
 from util.detect import Detector
 from util import img_process
@@ -137,7 +137,7 @@ class Car(object):
                     else:
                         ## Turn left or turn right
                         print('making desicion with ', dis_2_tan, radian_at_tan)
-                        self.contorller.make_decision(dis_2_tan, radian_at_tan, startT)
+                        self.contorller.make_decision(dis_2_tan, radian_at_tan)
                     stream.seek(0)
                     stream.truncate()
 
