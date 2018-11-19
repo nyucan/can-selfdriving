@@ -45,6 +45,32 @@ def img_load(path):
     return img
 
 
+def img_load_from_stream(stream):
+    file_bytes = np.asarray(bytearray(stream.read()), dtype=np.uint8)
+    img = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
+    return img
+
+
+def detect_obstacle(img):
+    """ Detect obstacle based on red pixels on the original image.
+    """
+    top = int(img.shape[0] * 0.15)
+    bottom = int(img.shape[0] * 0.25)
+    left = int(img.shape[1] * 0.35)
+    right = int(img.shape[1] * 0.65)
+    img = img[top:bottom, left:right]
+    # bgrsum = np.sum(np.sum(img, 1), 0)
+    # redsum = bgrsum[2] - bgrsum[1] - bgrsum[0] 
+    RED_MIN = np.array([0, 0, 0], np.uint8)
+    RED_MAX = np.array([50, 50, 255], np.uint8)
+    dst = cv2.inRange(img, RED_MIN, RED_MAX)
+    redsum = cv2.countNonZero(dst)
+    if redsum > 800:
+        return True
+    else:
+        return False
+
+
 def img_save(img, path):
     cv2.imwrite(path, img)
 

@@ -107,23 +107,25 @@ class Car(object):
     def run_offline(self):
         stream = io.BytesIO()
         counter = 1
+        startT = time.time()
         first_start = True
         with picamera.PiCamera(resolution='VGA') as camera:
             with io.BytesIO() as stream:
                 for _ in camera.capture_continuous(stream, format='jpeg', use_video_port=True):
                     stream.seek(0)
-                    ori_image = np.array(Image.open(stream))
-                    ori_image = img_process.standard_preprocess(ori_image, crop=True, down=True, f=False, binary=False)
-                    image = img_process.standard_preprocess(ori_image, crop=False, down=False, f=True, binary=True)
+                    ori_image = img_process.img_load_from_stream(stream)
+                    # ori_image = np.array(Image.open(stream))
+                    image = img_process.standard_preprocess(ori_image, crop=True, down=True, f=False, binary=False)
+                    image = img_process.standard_preprocess(image, crop=False, down=False, f=True, binary=True)
                     paras = self.detector.get_wrapped_all_parameters(image)
                     dc, dm, cur, ss = Car.unpackage_paras(paras)
                     dis_2_tan, pt = Detector.get_distance_2_tan(paras[6:9])
-                    # angle_at_tan = paras[14]
                     radian_at_tan = atan(paras[14])
                     # display the fitting result in real time
                     if configs['debug']:
-                        debug_img = img_process.compute_debug_image(ori_image, IMG_W, IMG_H, NUM_OF_POINTS, pt, paras)
-                        img_process.show_img(debug_img)
+                        # debug_img = img_process.compute_debug_image(ori_image, IMG_W, IMG_H, NUM_OF_POINTS, pt, paras)
+                        # img_process.show_img(debug_img)
+                        img_process.show_img(img_process.detect_obstacle(ori_image))
                     if first_start:
                         self.contorller.start()
                         startT = time.time()
@@ -133,22 +135,15 @@ class Car(object):
                         ## Stop the car
                         print('------- stop -------')
                         self.contorller.finish_control()
-                        self.contorller.make_decision(0,0,startT)
+                        # self.contorller.make_decision(0,0,startT)
                     else:
                         ## Turn left or turn right
-                        print('making desicion with ', dis_2_tan, radian_at_tan)
-                        self.contorller.make_decision(dis_2_tan, radian_at_tan)
+                        self.contorller.make_decision(dis_2_tan, radian_at_tan,startT)
                     stream.seek(0)
                     stream.truncate()
 
     def run_online(self, ip, port):
         pass
-    #     cs = socket.socket()
-    #     cs.connect((ip, port))
-    #     send_img_thread = threading.Thread(target=client.send_img, args=(cs, self.contorller,))
-    #     recv_data_thread = threading.Thread(target=client.recv_data, args=(cs, self.contorller,))
-    #     send_img_thread.start()
-    #     recv_data_thread.start()
 
     def run_online_single(self, ip, port):
         client_socket = socket.socket()
