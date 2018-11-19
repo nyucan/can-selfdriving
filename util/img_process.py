@@ -54,10 +54,11 @@ def img_load_from_stream(stream):
 def detect_obstacle(img):
     """ Detect obstacle based on red pixels on the original image.
     """
-    top = int(img.shape[0] * 0.15)
+    # top = int(img.shape[0] * 0.15)
+    top = int(img.shape[0] * 0.21)
     bottom = int(img.shape[0] * 0.25)
-    left = int(img.shape[1] * 0.35)
-    right = int(img.shape[1] * 0.65)
+    left = int(img.shape[1] * 0.4)
+    right = int(img.shape[1] * 0.6)
     img = img[top:bottom, left:right]
     # bgrsum = np.sum(np.sum(img, 1), 0)
     # redsum = bgrsum[2] - bgrsum[1] - bgrsum[0] 

@@ -89,7 +89,7 @@ class Controller(object):
         feature_sub = np.hstack((np.eye(1), s, s**2,[s[:,0]*s[:,1]])).transpose()
         return feature_sub
 
-    def make_decision(self, distance_2_tan, radian_at_tan,start_time):
+    def make_decision(self, distance_2_tan, radian_at_tan):
         """ Make decision with a list of parameters.
             @paras
                 distance_2_tan
@@ -100,7 +100,7 @@ class Controller(object):
         self.counter += 1
         cur_k_index = -1
         self.cur_K = -self.K_im_traj[cur_k_index]
-        
+        # self.cur_K = np.array([4,0,0])
         # if abs(self.dis_sum + distance_2_tan) < self.threshold:
         self.dis_sum += distance_2_tan
         state = np.array([distance_2_tan, radian_at_tan, self.dis_sum])
@@ -111,22 +111,12 @@ class Controller(object):
         pwm_mid = 50.0
         pwm_l_new = pwm_mid - differential_drive / 2
         pwm_r_new = pwm_mid + differential_drive / 2
-        # self.motor.motor_set_new_speed(pwm_l_new, pwm_r_new)
-        # if time() - start_time < 1:
-        #     self.motor.motor_set_new_speed(60,45)
-        #     print('1', time() - start_time)
-        if time() - start_time < 3:
-            self.motor.motor_set_new_speed(100, 25)
-            print('2', time() - start_time)
-        else:
-            self.motor.motor_set_new_speed(pwm_l_new, pwm_r_new)
-            print('change')
-
+        self.motor.motor_set_new_speed(pwm_l_new, pwm_r_new)
         # self.record.append((distance_2_tan, radian_at_tan, self.dis_sum, differential_drive))
         # check point
         if self.counter % 100 == 0:
             np.save(join('.', 'record', 'record'), np.array(self.record))
-        # self.counter += 1
+        self.counter += 1
         print(time() - self._start_time)
 
     def start(self):
