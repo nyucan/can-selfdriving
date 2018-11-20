@@ -55,7 +55,7 @@ def detect_obstacle(img):
     """ Detect obstacle based on red pixels on the original image.
     """
     # top = int(img.shape[0] * 0.15)
-    top = int(img.shape[0] * 0.21)
+    top = int(img.shape[0] * 0.18)
     bottom = int(img.shape[0] * 0.25)
     left = int(img.shape[1] * 0.4)
     right = int(img.shape[1] * 0.6)
