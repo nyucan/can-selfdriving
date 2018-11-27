@@ -54,22 +54,23 @@ def img_load_from_stream(stream):
 def detect_obstacle(img):
     """ Detect obstacle based on red pixels on the original image.
     """
-    # top = int(img.shape[0] * 0.15)
-    top = int(img.shape[0] * 0.18)
-    bottom = int(img.shape[0] * 0.25)
-    left = int(img.shape[1] * 0.4)
-    right = int(img.shape[1] * 0.6)
-    img = img[top:bottom, left:right]
-    # bgrsum = np.sum(np.sum(img, 1), 0)
-    # redsum = bgrsum[2] - bgrsum[1] - bgrsum[0] 
-    RED_MIN = np.array([0, 0, 0], np.uint8)
-    RED_MAX = np.array([50, 50, 255], np.uint8)
-    dst = cv2.inRange(img, RED_MIN, RED_MAX)
-    redsum = cv2.countNonZero(dst)
-    if redsum > 800:
-        return True
-    else:
-        return False
+    return False
+    # # top = int(img.shape[0] * 0.15)
+    # top = int(img.shape[0] * 0.18)
+    # bottom = int(img.shape[0] * 0.25)
+    # left = int(img.shape[1] * 0.4)
+    # right = int(img.shape[1] * 0.6)
+    # img = img[top:bottom, left:right]
+    # # bgrsum = np.sum(np.sum(img, 1), 0)
+    # # redsum = bgrsum[2] - bgrsum[1] - bgrsum[0] 
+    # RED_MIN = np.array([0, 0, 0], np.uint8)
+    # RED_MAX = np.array([50, 50, 255], np.uint8)
+    # dst = cv2.inRange(img, RED_MIN, RED_MAX)
+    # redsum = cv2.countNonZero(dst)
+    # if redsum > 800:
+    #     return True
+    # else:
+    #     return False
 
 
 def img_save(img, path):
