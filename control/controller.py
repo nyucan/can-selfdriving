@@ -99,6 +99,7 @@ class Controller(object):
         # self.counter = self.counter+1
         self.counter += 1
         cur_k_index = -1
+        # cur_k_index = 1
         self.cur_K = -self.K_im_traj[cur_k_index]
         # self.cur_K = np.array([4,0,0])
         # if abs(self.dis_sum + distance_2_tan) < self.threshold:

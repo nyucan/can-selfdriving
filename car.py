@@ -178,6 +178,18 @@ class Car(object):
         connection.close()
         client_socket.close()
 
+    def run_as_fast_as_you_can(self):
+        self.contorller.start()
+
     def stop(self):
         self.contorller.finish_control()
         self.contorller.cleanup()
+
+
+if __name__ == '__main__':
+    try:
+        car = Car()
+        time.sleep(1)
+        car.run_as_fast_as_you_can()
+    except KeyboardInterrupt:
+        car.stop()
