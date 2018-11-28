@@ -113,7 +113,6 @@ class Car(object):
         with picamera.PiCamera(resolution='VGA') as camera:
             with io.BytesIO() as stream:
                 # ob = True
-                count = 1
                 for _ in camera.capture_continuous(stream, format='jpeg', use_video_port=True):
                     stream.seek(0)
                     ori_image = img_process.img_load_from_stream(stream)
@@ -124,13 +123,13 @@ class Car(object):
                     dc, dm, cur, ss = Car.unpackage_paras(paras)
                     dis_2_tan, pt = Detector.get_distance_2_tan(paras[6:9])
                     radian_at_tan = atan(paras[14])
-                    if count == 1:
-                        ob = img_process.detect_obstacle(ori_image)
+
+                    # detect red pixels
+                    ob = img_process.detect_obstacle(ori_image)
                     # display the fitting result in real time
                     if configs['debug']:
                         debug_img = img_process.compute_debug_image(image1, IMG_W, IMG_H, NUM_OF_POINTS, pt, paras)
-                        img_process.show_img(debug_img)
-                        # img_process.show_img(img_process.detect_obstacle(ori_image))
+                        # img_process.show_img(debug_img)
                     if first_start:
                         self.contorller.start()
                         # startT = time.time()
@@ -140,8 +139,7 @@ class Car(object):
                         startT = time.time()
                         ob = False
                         print("ob_op")
-                        self.avoid.collision_avoid(startT)
-                        count -= 1
+                        # self.avoid.collision_avoid(startT)
                     elif ss:
                         ## Stop the car
                         print('------- stop -------')

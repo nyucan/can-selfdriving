@@ -19,6 +19,10 @@ class Controller(object):
         self.K_im_traj = np.load('./control/K_traj_IM_VI.npy')
         self.dis_sum = 0
         self.threshold = 500
+        # car 1
+        # self.basespeed = 50        
+        # car 2
+        self.basespeed = 45
 
     def init_record(self):
         self.counter = 1
@@ -105,20 +109,19 @@ class Controller(object):
         # if abs(self.dis_sum + distance_2_tan) < self.threshold:
         self.dis_sum += distance_2_tan
         state = np.array([distance_2_tan, radian_at_tan, self.dis_sum])
-        differential_drive = np.clip(-np.matmul(self.cur_K, state), -100.0, 100.0)
+        differential_drive = np.clip(-np.matmul(self.cur_K, state), - 2 * self.basespeed, 2 * self.basespeed)
         # self.memory[self.memory_counter, :] = np.hstack([state, differential_drive])
-        print('controller with k ' + str(cur_k_index) + ':', distance_2_tan, radian_at_tan)
+        # print('controller with k ' + str(cur_k_index) + ':', distance_2_tan, radian_at_tan)
         # self.memory_counter += 1
-        pwm_mid = 50.0
-        pwm_l_new = pwm_mid - differential_drive / 2
-        pwm_r_new = pwm_mid + differential_drive / 2
+        pwm_l_new = self.basespeed - differential_drive / 2
+        pwm_r_new = self.basespeed + differential_drive / 2
         self.motor.motor_set_new_speed(pwm_l_new, pwm_r_new)
         # self.record.append((distance_2_tan, radian_at_tan, self.dis_sum, differential_drive))
         # check point
         if self.counter % 100 == 0:
             np.save(join('.', 'record', 'record'), np.array(self.record))
         self.counter += 1
-        print(time() - self._start_time)
+        # print(time() - self._start_time)
 
     def start(self):
         self.motor.motor_startup()

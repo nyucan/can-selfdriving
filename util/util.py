@@ -61,3 +61,10 @@ def transfer_to_rgb(bin_img):
                 # rgb_img[i][j] = [0, 0, 255]
                 rgb_img[i][j] = [0, 0, 0]
     return rgb_img
+
+
+def find_peaks(arr):
+    """ Detect peaks in an np.array.
+        @paras np.array arr
+        @return np.array: the index of peaks
+    """

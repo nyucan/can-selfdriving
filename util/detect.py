@@ -95,7 +95,7 @@ class Detector(object):
                     w_right = self.w_right_previous
             # if lane_center_left is not None and lane_center_right is not None:
             THRESHOLD = 1000
-            print('diff', math_support.e_diff(w_left, self.w_left_previous), math_support.e_diff(w_right, self.w_right_previous))
+            # print('diff', math_support.e_diff(w_left, self.w_left_previous), math_support.e_diff(w_right, self.w_right_previous))
             if self.is_init:
                 self.is_init = False
                 self.w_left_previous = w_left

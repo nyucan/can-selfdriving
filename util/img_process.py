@@ -54,23 +54,30 @@ def img_load_from_stream(stream):
 def detect_obstacle(img):
     """ Detect obstacle based on red pixels on the original image.
     """
-    return False
-    # # top = int(img.shape[0] * 0.15)
-    # top = int(img.shape[0] * 0.18)
-    # bottom = int(img.shape[0] * 0.25)
-    # left = int(img.shape[1] * 0.4)
-    # right = int(img.shape[1] * 0.6)
-    # img = img[top:bottom, left:right]
-    # # bgrsum = np.sum(np.sum(img, 1), 0)
-    # # redsum = bgrsum[2] - bgrsum[1] - bgrsum[0] 
-    # RED_MIN = np.array([0, 0, 0], np.uint8)
-    # RED_MAX = np.array([50, 50, 255], np.uint8)
-    # dst = cv2.inRange(img, RED_MIN, RED_MAX)
-    # redsum = cv2.countNonZero(dst)
-    # if redsum > 800:
-    #     return True
-    # else:
-    #     return False
+    # return False
+    top = int(img.shape[0] * 0.3)
+    bottom = int(img.shape[0] * 1)
+    left = int(img.shape[1] * 0.25)
+    right = int(img.shape[1] * 0.75)
+    img = img[:, left:right]
+    RED_MIN = np.array([0, 0, 100], np.uint8)
+    RED_MAX = np.array([100, 100, 255], np.uint8)
+    dst = cv2.inRange(img, RED_MIN, RED_MAX)
+    # reduce noise
+    k1 = np.ones((5, 5), np.uint8)
+    k2 = np.ones((5, 5), np.uint8)
+    dst = cv2.erode(dst, k1, iterations=1)
+    dst = cv2.dilate(dst, k1, iterations=1)
+    dst = cv2.dilate(dst, k2, iterations=1)
+    dst = cv2.erode(dst, k2, iterations=1)
+    redsum = cv2.countNonZero(dst)
+    show_img(img, winname='origin', pos=(40, 30))
+    show_img(dst, winname='binary', pos=(420, 30))
+    print(redsum)
+    if redsum > 1000:
+        return True
+    else:
+        return False
 
 
 def img_save(img, path):
@@ -100,13 +107,16 @@ def enlarge_img(img, times):
     return img
 
 
-def show_img(img, is_bin=False):
+def show_img(img, is_bin=False, winname="Test", pos=(40, 30)):
     if is_bin:
         # restore
-        pass
-    winname = "Test"
+        for i in range(len(img)):
+            if img[i] == 1:
+                img[i] == (255, 255, 255)
+            else:
+                img[i] == (0, 0, 0)
     cv2.namedWindow(winname)        # Create a named window
-    cv2.moveWindow(winname, 40,30)  # Move it to (40,30)
+    cv2.moveWindow(winname, pos[0], pos[1])  # Move it to (40,30)
     cv2.imshow(winname, img)
     cv2.waitKey(10)
 
