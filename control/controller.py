@@ -67,7 +67,8 @@ class Controller(object):
 
     def finish_control(self):
         print('contorller: stop')
-        self.motor.motor_stop()
+        self.basespeed = 40
+        # self.motor.motor_stop()
         # np.save(join('.', 'record', 'memory_'), self.memory)
         np.save(join('.', 'record', 'record'), np.array(self.record))
 
@@ -103,24 +104,25 @@ class Controller(object):
         base_distance = 20
         if distance2car is not None:
             # control the base speed
-            # self.basespeed += k_speed * (base_distance - distance2car)
-            pass
+            if distance2car < 10:
+                self.basespeed = 40
+            elif distance2car > 30:
+                self.basespeed = 55
+            else:
+                self.basespeed = k_speed * (base_distance - distance2car) + 50
+                np.clip(self.basespeed, 40, 60)
+                print('basespeed,', self.basespeed)
 
-        # cur_k_index = int((c) / 20) * 1 + 3
-        # self.counter = self.counter+1
         self.counter += 1
         cur_k_index = -1
-        # cur_k_index = 1
         self.cur_K = -self.K_im_traj[cur_k_index]
-        # self.cur_K = np.array([4,0,0])
-        # if abs(self.dis_sum + distance_2_tan) < self.threshold:
         self.dis_sum += distance_2_tan
         state = np.array([distance_2_tan, radian_at_tan, self.dis_sum])
-        differential_drive = np.clip(-np.matmul(self.cur_K, state), - 2 * self.basespeed, 2 * self.basespeed)
-        pwm_l_new = self.basespeed - differential_drive / 2
-        pwm_r_new = self.basespeed + differential_drive / 2
+        differential_drive = -np.matmul(self.cur_K, state)
+        pwm_l_new = np.clip(self.basespeed - differential_drive / 2, 0, 100)
+        pwm_r_new = np.clip(self.basespeed + differential_drive / 2, 0, 100)
+        # print('new_speed:', pwm_l_new, pwm_r_new)
         self.motor.motor_set_new_speed(pwm_l_new, pwm_r_new)
-        # self.record.append((distance_2_tan, radian_at_tan, self.dis_sum, differential_drive))
         # check point
         if self.counter % 100 == 0:
             np.save(join('.', 'record', 'record'), np.array(self.record))

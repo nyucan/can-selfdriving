@@ -71,14 +71,14 @@ def detect_distance(img):
     dst = cv2.dilate(dst, k2, iterations=1)
     dst = cv2.erode(dst, k2, iterations=1)
     redsum = cv2.countNonZero(dst)
-    # show_img(img, winname='origin', pos=(40, 30))
-    # show_img(dst, winname='binary', pos=(420, 30))
+    show_img(img, winname='origin', pos=(40, 30))
+    show_img(dst, winname='binary', pos=(420, 30))
     # compute distance
-    w = [6.9932, -0.5482, 0.0113]
-    x = redsum / 1000
-    d = w[0] * x + w[1] * x ** 2 + w[2] ** x ** 3
-    print('redsum: ' + str(redsum))
-    print('distance: ' + str(d))
+    w = [-8.4275, 31.0679]
+    x = [redsum / 10000, 1]
+    d = w[0] * x[0] + w[1] * x[1]
+    # print('redsum: ' + str(redsum))
+    # print('distance: ' + str(d))
     return d
 
 
