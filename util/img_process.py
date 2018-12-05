@@ -51,7 +51,7 @@ def img_load_from_stream(stream):
     return img
 
 
-def detect_obstacle(img):
+def detect_distance(img):
     """ Detect obstacle based on red pixels on the original image.
     """
     # return False
@@ -71,13 +71,15 @@ def detect_obstacle(img):
     dst = cv2.dilate(dst, k2, iterations=1)
     dst = cv2.erode(dst, k2, iterations=1)
     redsum = cv2.countNonZero(dst)
-    show_img(img, winname='origin', pos=(40, 30))
-    show_img(dst, winname='binary', pos=(420, 30))
-    print(redsum)
-    if redsum > 1000:
-        return True
-    else:
-        return False
+    # show_img(img, winname='origin', pos=(40, 30))
+    # show_img(dst, winname='binary', pos=(420, 30))
+    # compute distance
+    w = [6.9932, -0.5482, 0.0113]
+    x = redsum / 1000
+    d = w[0] * x + w[1] * x ** 2 + w[2] ** x ** 3
+    print('redsum: ' + str(redsum))
+    print('distance: ' + str(d))
+    return d
 
 
 def img_save(img, path):

@@ -93,12 +93,19 @@ class Controller(object):
         feature_sub = np.hstack((np.eye(1), s, s**2,[s[:,0]*s[:,1]])).transpose()
         return feature_sub
 
-    def make_decision(self, distance_2_tan, radian_at_tan):
+    def make_decision(self, distance_2_tan, radian_at_tan, distance2car=None):
         """ Make decision with a list of parameters.
             @paras
                 distance_2_tan
                 radian_at_tan
         """
+        k_speed = -1
+        base_distance = 20
+        if distance2car is not None:
+            # control the base speed
+            # self.basespeed += k_speed * (base_distance - distance2car)
+            pass
+
         # cur_k_index = int((c) / 20) * 1 + 3
         # self.counter = self.counter+1
         self.counter += 1
@@ -110,9 +117,6 @@ class Controller(object):
         self.dis_sum += distance_2_tan
         state = np.array([distance_2_tan, radian_at_tan, self.dis_sum])
         differential_drive = np.clip(-np.matmul(self.cur_K, state), - 2 * self.basespeed, 2 * self.basespeed)
-        # self.memory[self.memory_counter, :] = np.hstack([state, differential_drive])
-        # print('controller with k ' + str(cur_k_index) + ':', distance_2_tan, radian_at_tan)
-        # self.memory_counter += 1
         pwm_l_new = self.basespeed - differential_drive / 2
         pwm_r_new = self.basespeed + differential_drive / 2
         self.motor.motor_set_new_speed(pwm_l_new, pwm_r_new)

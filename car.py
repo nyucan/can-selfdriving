@@ -14,7 +14,7 @@ import numpy as np
 from PIL import Image
 
 from control.controller import Controller
-from control.car_avoid import CarAvoid
+# from control.car_avoid import CarAvoid
 from control.processImage import processImage
 from util.detect import Detector
 from util import img_process
@@ -33,7 +33,7 @@ class Car(object):
     """
     def __init__(self):
         self.contorller = Controller()
-        self.avoid = CarAvoid()
+        # self.avoid = CarAvoid()
         self.detector = Detector()
         self.pre_img_id = -1
         self.cur_img_id = -1
@@ -125,7 +125,7 @@ class Car(object):
                     radian_at_tan = atan(paras[14])
 
                     # detect red pixels
-                    ob = img_process.detect_obstacle(ori_image)
+                    distance2car = img_process.detect_distance(ori_image)
                     # display the fitting result in real time
                     if configs['debug']:
                         debug_img = img_process.compute_debug_image(image1, IMG_W, IMG_H, NUM_OF_POINTS, pt, paras)
@@ -135,19 +135,13 @@ class Car(object):
                         # startT = time.time()
                         first_start = False
                     # Control the car according to the parameters
-                    if ob:
-                        startT = time.time()
-                        ob = False
-                        print("ob_op")
-                        # self.avoid.collision_avoid(startT)
-                    elif ss:
+                    if ss:
                         ## Stop the car
                         print('------- stop -------')
                         self.contorller.finish_control()
-                        # self.contorller.make_decision(0,0,startT)
                     else:
                         ## Turn left or turn right
-                        self.contorller.make_decision(dis_2_tan, radian_at_tan)
+                        self.contorller.make_decision(dis_2_tan, radian_at_tan, distance2car)
                     stream.seek(0)
                     stream.truncate()
 
