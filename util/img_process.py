@@ -60,8 +60,8 @@ def detect_distance(img):
     left = int(img.shape[1] * 0.25)
     right = int(img.shape[1] * 0.75)
     img = img[:, left:right]
-    RED_MIN = np.array([0, 0, 100], np.uint8)
-    RED_MAX = np.array([100, 100, 255], np.uint8)
+    RED_MIN = np.array([10, 10, 90], np.uint8)
+    RED_MAX = np.array([80, 80, 255], np.uint8)
     dst = cv2.inRange(img, RED_MIN, RED_MAX)
     # reduce noise
     k1 = np.ones((5, 5), np.uint8)
@@ -71,10 +71,10 @@ def detect_distance(img):
     dst = cv2.dilate(dst, k2, iterations=1)
     dst = cv2.erode(dst, k2, iterations=1)
     redsum = cv2.countNonZero(dst)
-    show_img(img, winname='origin', pos=(40, 30))
-    show_img(dst, winname='binary', pos=(420, 30))
+    # show_img(img, winname='origin', pos=(40, 30))
+    # show_img(dst, winname='binary', pos=(420, 30))
     # compute distance
-    w = [-8.4275, 31.0679]
+    w = [-8.4275, 35.0000]
     x = [redsum / 10000, 1]
     d = w[0] * x[0] + w[1] * x[1]
     # print('redsum: ' + str(redsum))

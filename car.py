@@ -105,10 +105,9 @@ class Car(object):
                 self.contorller.make_decision(d2t, aot)
             self.pre_img_id = img_id
 
-    def run_offline(self):
+    def run_offline(self, debug=True):
         stream = io.BytesIO()
         counter = 1
-        # startT = time.time()
         first_start = True
         with picamera.PiCamera(resolution='VGA') as camera:
             with io.BytesIO() as stream:
@@ -126,13 +125,13 @@ class Car(object):
 
                     # detect red pixels
                     distance2car = img_process.detect_distance(ori_image)
+
                     # display the fitting result in real time
-                    if configs['debug']:
+                    if debug:
                         debug_img = img_process.compute_debug_image(image1, IMG_W, IMG_H, NUM_OF_POINTS, pt, paras)
-                        # img_process.show_img(debug_img)
+                        img_process.show_img(debug_img)
                     if first_start:
                         self.contorller.start()
-                        # startT = time.time()
                         first_start = False
                     # Control the car according to the parameters
                     if ss:
@@ -140,8 +139,14 @@ class Car(object):
                         print('------- stop -------')
                         self.contorller.finish_control()
                     else:
-                        ## Turn left or turn right
-                        self.contorller.make_decision(dis_2_tan, radian_at_tan, distance2car)
+                        ## car 1
+                        self.contorller.make_decision('adp_lane_keeping_decision', dis_2_tan, radian_at_tan)
+                        ## car 2
+                        # if distance2car >= 34: 
+                        #     # no car => lane keeping 
+                        #     self.contorller.make_decision('adp_lane_keeping_decision', dis_2_tan, radian_at_tan)
+                        # else:
+                        #     self.contorller.make_decision('manual_follow_decision', dis_2_tan, radian_at_tan, distance2car)
                     stream.seek(0)
                     stream.truncate()
 

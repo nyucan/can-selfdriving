@@ -15,20 +15,14 @@ class Controller(object):
         self.motor = Motor(slient=True)
         self._start_time = time()
         # self.init_memory()
-        self.init_record()
+        # self.init_record()
         self.K_im_traj = np.load('./control/K_traj_IM_VI.npy')
         self.dis_sum = 0
         self.threshold = 500
-        # car 1
-        # self.basespeed = 50        
-        # car 2
-        self.basespeed = 45
 
     def init_record(self):
         self.counter = 1
         self.record = []
-        # record_size = 5000
-        # self.dis_record = np.zeros((record_size, 1))
 
     def init_memory(self):
         go_straight_00 = np.array([50, 60])
@@ -70,7 +64,7 @@ class Controller(object):
         self.basespeed = 40
         # self.motor.motor_stop()
         # np.save(join('.', 'record', 'memory_'), self.memory)
-        np.save(join('.', 'record', 'record'), np.array(self.record))
+        # np.save(join('.', 'record', 'record'), np.array(self.record))
 
     def choose_action_using_simple_logic(self, distance_to_center):
         """ Naive policy to achive lane keeping, using simple rules.
@@ -94,26 +88,21 @@ class Controller(object):
         feature_sub = np.hstack((np.eye(1), s, s**2,[s[:,0]*s[:,1]])).transpose()
         return feature_sub
 
-    def make_decision(self, distance_2_tan, radian_at_tan, distance2car=None):
-        """ Make decision with a list of parameters.
-            @paras
-                distance_2_tan
-                radian_at_tan
+    def make_decision(self, type, *args):
+        """ Make decision, the overloaded version.
         """
-        k_speed = -1
-        base_distance = 20
-        if distance2car is not None:
-            # control the base speed
-            if distance2car < 10:
-                self.basespeed = 40
-            elif distance2car > 30:
-                self.basespeed = 55
-            else:
-                self.basespeed = k_speed * (base_distance - distance2car) + 50
-                np.clip(self.basespeed, 40, 60)
-                print('basespeed,', self.basespeed)
+        if type == 'adp_lane_keeping_decision':
+            self.adp_lane_keeping_decision(args[0], args[1])
+        elif type == 'p_lane_keeping_decision':
+            pass
+        elif type == 'manual_follow_decision':
+            self.manual_follow_decision(args[0], args[1], args[2])
 
-        self.counter += 1
+    def adp_lane_keeping_decision(self, distance_2_tan, radian_at_tan):
+        ## car 1
+        self.basespeed = 50
+        ## car 2
+        # self.basespeed = 55
         cur_k_index = -1
         self.cur_K = -self.K_im_traj[cur_k_index]
         self.dis_sum += distance_2_tan
@@ -121,13 +110,30 @@ class Controller(object):
         differential_drive = -np.matmul(self.cur_K, state)
         pwm_l_new = np.clip(self.basespeed - differential_drive / 2, 0, 100)
         pwm_r_new = np.clip(self.basespeed + differential_drive / 2, 0, 100)
+        self.motor.motor_set_new_speed(pwm_l_new, pwm_r_new)
+
+    def manual_follow_decision(self, distance_2_tan, radian_at_tan, distance2car):
+        k_speed = -1
+        base_distance = 27
+        
+        # control the base speed
+        if distance2car < 20:
+            self.basespeed = 30
+        elif distance2car < 25:
+            self.basespeed = 40
+        else:
+            self.basespeed = k_speed * (base_distance - distance2car) + 50
+            np.clip(self.basespeed, 42, 58)
+        print('speed: ', self.basespeed)
+
+        self.cur_K = -self.K_im_traj[-1]
+        self.dis_sum += distance_2_tan
+        state = np.array([distance_2_tan, radian_at_tan, self.dis_sum])
+        differential_drive = -np.matmul(self.cur_K, state)
+        pwm_l_new = np.clip(self.basespeed - differential_drive / 2, 0, 100)
+        pwm_r_new = np.clip(self.basespeed + differential_drive / 2, 0, 100)
         # print('new_speed:', pwm_l_new, pwm_r_new)
         self.motor.motor_set_new_speed(pwm_l_new, pwm_r_new)
-        # check point
-        if self.counter % 100 == 0:
-            np.save(join('.', 'record', 'record'), np.array(self.record))
-        self.counter += 1
-        # print(time() - self._start_time)
 
     def start(self):
         self.motor.motor_startup()
