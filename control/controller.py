@@ -7,6 +7,7 @@ from time import sleep, time
 from os.path import join
 
 from control.motor import Motor
+from control import policy
 
 
 class Controller(object):
@@ -30,18 +31,23 @@ class Controller(object):
         if self.is_recording:
             np.save(join('.', 'record', 'record'), np.array(self.record))
 
-    def make_decision(self, distance_2_tan, radian_at_tan):
-        """ ADP version: Make decision with `distance_2_tan` and `radian_at_tan`.
+    def make_decision_with_policy(self, policy_type, *args):
+        """ Make decision with different policies.
+            @param policy_type
+                1: ADP
+                2: pure pursuit
         """
-        cur_k_index = -1
-        self.cur_K = -self.K_im_traj[cur_k_index]
-        self.dis_sum += distance_2_tan
-        state = np.array([distance_2_tan, radian_at_tan, self.dis_sum])
-        differential_drive = np.clip(-np.matmul(self.cur_K, state), -100.0, 100.0)
-        print('controller with k ' + str(cur_k_index) + ':', distance_2_tan, radian_at_tan)
-        pwm_mid = 50.0
-        pwm_l_new = pwm_mid - differential_drive / 2
-        pwm_r_new = pwm_mid + differential_drive / 2
+        if policy_type == 1:    # ADP
+            assert len(args) == 2, 'args should be exactly 2'
+            cur_K = -self.K_im_traj[-1]
+            distance_2_tan, radian_at_tan = args
+            self.dis_sum += distance_2_tan
+            pwm_l_new, pwm_r_new = policy.adp(distance_2_tan, radian_at_tan, self.dis_sum, cur_K)
+        elif policy_type == 2:  # pure pursuit
+            pwm_l_new, pwm_r_new = 0, 0
+        else:
+            pwm_l_new, pwm_r_new = 0, 0
+            print('Policy Not Found')
         self.motor.motor_set_new_speed(pwm_l_new, pwm_r_new)
         # -------- recording data --------
         if self.is_recording:
@@ -52,7 +58,31 @@ class Controller(object):
                 np.save(join('.', 'record', 'record'), np.array(self.record))
             self.counter += 1
         # --------------------------------
-        print(time() - self._start_time)
+
+
+    # def make_decision(self, distance_2_tan, radian_at_tan):
+    #     """ ADP version: Make decision with `distance_2_tan` and `radian_at_tan`.
+    #     """
+    #     cur_k_index = -1
+    #     self.cur_K = -self.K_im_traj[cur_k_index]
+    #     self.dis_sum += distance_2_tan
+    #     state = np.array([distance_2_tan, radian_at_tan, self.dis_sum])
+    #     differential_drive = np.clip(-np.matmul(self.cur_K, state), -100.0, 100.0)
+    #     print('controller with k ' + str(cur_k_index) + ':', distance_2_tan, radian_at_tan)
+    #     pwm_mid = 50.0
+    #     pwm_l_new = pwm_mid - differential_drive / 2
+    #     pwm_r_new = pwm_mid + differential_drive / 2
+    #     self.motor.motor_set_new_speed(pwm_l_new, pwm_r_new)
+    #     # -------- recording data --------
+    #     if self.is_recording:
+    #         self.counter += 1
+    #         self.record.append((distance_2_tan, radian_at_tan, self.dis_sum, differential_drive))
+    #         # check point
+    #         if self.counter % 100 == 0:
+    #             np.save(join('.', 'record', 'record'), np.array(self.record))
+    #         self.counter += 1
+    #     # --------------------------------
+    #     print(time() - self._start_time)
 
     def start(self):
         self.motor.motor_startup()

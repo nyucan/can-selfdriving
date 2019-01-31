@@ -100,7 +100,7 @@ class Car(object):
             if stop_signal:
                 self.contorller.finish_control()
             else:
-                self.contorller.make_decision(d2t, aot)
+                self.contorller.make_decision_with_policy(1, d2t, aot)
             self.pre_img_id = img_id
 
     def run_offline(self, debug=True):
@@ -138,14 +138,8 @@ class Car(object):
                         print('------- stop -------')
                         self.contorller.finish_control()
                     else:
-                        ## car 1
-                        self.contorller.make_decision(dis_2_tan, radian_at_tan)
-                        ## car 2
-                        # if distance2car >= 34: 
-                        #     # no car => lane keeping 
-                        #     self.contorller.make_decision('adp_lane_keeping_decision', dis_2_tan, radian_at_tan)
-                        # else:
-                        #     self.contorller.make_decision('manual_follow_decision', dis_2_tan, radian_at_tan, distance2car)
+                        ## ADP
+                        self.contorller.make_decision_with_policy(1, dis_2_tan, radian_at_tan)
                     stream.seek(0)
                     stream.truncate()
 
