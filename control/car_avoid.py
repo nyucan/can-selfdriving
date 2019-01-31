@@ -31,14 +31,14 @@ class CarAvoid(object):
             # if time() - start_time < 1:
             #     self.motor.motor_set_new_speed(60,45)
             #     print('ob1', time() - start_time)
-            if time() - start_time < 2.9:
-                self.motor.motor_set_new_speed(100, 20)
+            if time() - start_time < 3:
+                self.motor.motor_set_new_speed(100, 9)
                 print('ob2', time() - start_time)
-            elif time() - start_time <5.5:
-                self.motor.motor_set_new_speed(20,95)
+            elif time() - start_time < 5.7:
+                self.motor.motor_set_new_speed(15, 98)
                 print('ob3', time() - start_time)
-            elif time() - start_time <6.3:
-                self.motor.motor_set_new_speed(100,25)
+            elif time() - start_time < 6.3:
+                self.motor.motor_set_new_speed(100, 20)
                 print('ob4', time() - start_time)  
             else:
                 # self.motor.motor_set_new_speed(pwm_l_new, pwm_r_new)
