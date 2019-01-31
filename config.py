@@ -16,5 +16,6 @@ configs = {
     'fitting': {
         'num_of_points': 48
     },
-    'debug': True
+    'debug': True,
+    'avoid_collision': False
 }

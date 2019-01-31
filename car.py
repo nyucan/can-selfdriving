@@ -14,7 +14,6 @@ import numpy as np
 from PIL import Image
 
 from control.controller import Controller
-# from control.car_avoid import CarAvoid
 from control.processImage import processImage
 from util.detect import Detector
 from util import img_process
@@ -33,7 +32,6 @@ class Car(object):
     """
     def __init__(self):
         self.contorller = Controller()
-        # self.avoid = CarAvoid()
         self.detector = Detector()
         self.pre_img_id = -1
         self.cur_img_id = -1
@@ -107,40 +105,41 @@ class Car(object):
 
     def run_offline(self, debug=True):
         stream = io.BytesIO()
-        counter = 1
         first_start = True
+        waitting_for_ob = configs['avoid_collision']
         with picamera.PiCamera(resolution='VGA') as camera:
             with io.BytesIO() as stream:
-                # ob = True
                 for _ in camera.capture_continuous(stream, format='jpeg', use_video_port=True):
                     stream.seek(0)
                     ori_image = img_process.img_load_from_stream(stream)
-                    # ori_image = np.array(Image.open(stream))
-                    image1 = img_process.standard_preprocess(ori_image, crop=True, down=True, f=False, binary=False)
-                    image = img_process.standard_preprocess(image1, crop=False, down=False, f=True, binary=True)
+                    debug_img = img_process.standard_preprocess(ori_image, crop=True, down=True, f=False, binary=False)
+                    image = img_process.standard_preprocess(debug_img, crop=False, down=False, f=True, binary=True)
                     paras = self.detector.get_wrapped_all_parameters(image)
                     dc, dm, cur, ss = Car.unpackage_paras(paras)
                     dis_2_tan, pt = Detector.get_distance_2_tan(paras[6:9])
                     radian_at_tan = atan(paras[14])
-
-                    # detect red pixels
-                    distance2car = img_process.detect_distance(ori_image)
-
+                    if waitting_for_ob:
+                        ob = img_process.detect_obstacle(ori_image)
                     # display the fitting result in real time
-                    if debug:
-                        debug_img = img_process.compute_debug_image(image1, IMG_W, IMG_H, NUM_OF_POINTS, pt, paras)
+                    if configs['debug']:
+                        debug_img = img_process.compute_debug_image(debug_img, IMG_W, IMG_H, NUM_OF_POINTS, pt, paras)
                         img_process.show_img(debug_img)
                     if first_start:
                         self.contorller.start()
                         first_start = False
                     # Control the car according to the parameters
-                    if ss:
+                    if waitting_for_ob and ob:
+                        ob = False
+                        print("attampting to avoid ...")
+                        self.contorller.collision_avoid(time.time())
+                        waitting_for_ob = False
+                    elif ss:
                         ## Stop the car
                         print('------- stop -------')
                         self.contorller.finish_control()
                     else:
                         ## car 1
-                        self.contorller.make_decision('adp_lane_keeping_decision', dis_2_tan, radian_at_tan)
+                        self.contorller.make_decision(dis_2_tan, radian_at_tan)
                         ## car 2
                         # if distance2car >= 34: 
                         #     # no car => lane keeping 

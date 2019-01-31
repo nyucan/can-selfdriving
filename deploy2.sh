@@ -1,6 +1,5 @@
 scp client.py pi@192.168.1.5:/home/pi/mingyu/can-selfdriving/
 scp config.py pi@192.168.1.5:/home/pi/mingyu/can-selfdriving/
-scp car-avoid.py pi@192.168.1.5:/home/pi/mingyu/can-selfdriving/
 scp car.py pi@192.168.1.5:/home/pi/mingyu/can-selfdriving/
 scp -r ./util pi@192.168.1.5:/home/pi/mingyu/can-selfdriving/
 scp -r ./control pi@192.168.1.5:/home/pi/mingyu/can-selfdriving/
