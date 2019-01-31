@@ -112,8 +112,10 @@ class Car(object):
                 for _ in camera.capture_continuous(stream, format='jpeg', use_video_port=True):
                     stream.seek(0)
                     ori_image = img_process.img_load_from_stream(stream)
-                    debug_img = img_process.standard_preprocess(ori_image, crop=True, down=True, f=False, binary=False)
-                    image = img_process.standard_preprocess(debug_img, crop=False, down=False, f=True, binary=True)
+                    debug_img = img_process.crop_image(ori_image, 0.45, 0.85)
+                    debug_img = img_process.down_sample(debug_img, (160, 48))
+                    # debug_img = img_process.birdeye(debug_img)
+                    image = img_process.binarize(debug_img)
                     paras = self.detector.get_wrapped_all_parameters(image)
                     dc, dm, cur, ss = Car.unpackage_paras(paras)
                     dis_2_tan, pt = Detector.get_distance_2_tan(paras[6:9])

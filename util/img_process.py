@@ -9,6 +9,54 @@ LOW_LANE_COLOR = np.uint8([[[0,0,0]]])
 UPPER_LANE_COLOR = np.uint8([[[0,0,0]]]) + 40
 
 
+def birdeye(img):
+    h, w = img.shape[:2]
+    src = np.float32([[w, h-10],    # br
+                      [0, h-10],    # bl
+                      [0, 20],   # tl
+                      [w, 20]])  # tr
+    dst = np.float32([[w, h],       # br
+                      [0, h],       # bl
+                      [0, 0],       # tl
+                      [w, 0]])      # tr
+    M = cv2.getPerspectiveTransform(src, dst)
+    warped = cv2.warpPerspective(img, M, (w, h), flags=cv2.INTER_LINEAR)
+    return warped
+
+
+def binarize(img):
+    """
+    Convert an input frame to a binary image which highlight as most as possible the lane-lines.
+    :param img: input color frame
+    :param verbose: if True, show intermediate results
+    :return: binarized frame
+    """
+    h, w = img.shape[:2]
+    binary = np.zeros(shape=(h, w), dtype=np.uint8)
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    _, th = cv2.threshold(gray, thresh=30, maxval=255, type=cv2.THRESH_BINARY_INV)
+    binary = np.logical_or(binary, th)
+    sobel_mask = thresh_frame_sobel(img, kernel_size=9)
+    binary = np.logical_or(binary, sobel_mask)
+    kernel = np.ones((3, 3), np.uint8)
+    binary = cv2.erode(binary.astype(np.uint8), kernel, iterations=2)
+    binary = cv2.dilate(binary, kernel, iterations=1)
+    return binary
+
+
+def thresh_frame_sobel(frame, kernel_size):
+    """
+    Apply Sobel edge detection to an input frame, then threshold the result
+    """
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    sobel_x = cv2.Sobel(gray, cv2.CV_64F, 1, 0, ksize=kernel_size)
+    sobel_y = cv2.Sobel(gray, cv2.CV_64F, 0, 1, ksize=kernel_size)
+    sobel_mag = np.sqrt(sobel_x ** 2 + sobel_y ** 2)
+    sobel_mag = np.uint8(sobel_mag / np.max(sobel_mag) * 255)
+    _, sobel_mag = cv2.threshold(sobel_mag, 50, 1, cv2.THRESH_BINARY)
+    return sobel_mag.astype(bool)
+
+
 def standard_preprocess(img, crop=True, down=True, f=True, binary=True):
     """ Perform filter operations to pre-process the image.
     """
