@@ -44,7 +44,9 @@ class Controller(object):
             self.dis_sum += distance_2_tan
             pwm_l_new, pwm_r_new = policy.adp(distance_2_tan, radian_at_tan, self.dis_sum, cur_K)
         elif policy_type == 2:  # pure pursuit
-            pwm_l_new, pwm_r_new = 0, 0
+            l_d, sin_alpha = args
+            amp = 0.5
+            pwm_l_new, pwm_r_new = policy.pure_pursuit(l_d, sin_alpha, k)
         else:
             pwm_l_new, pwm_r_new = 0, 0
             print('Policy Not Found')

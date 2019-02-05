@@ -213,4 +213,24 @@ class Detector(object):
         poly_fit = np.poly1d(w)
         y_fitted = poly_fit(x)
         return y_fitted
-
+    
+    @classmethod
+    def get_distance_angle_pp(cls, w):
+        rear_axel = (IMG_WIDTH, IMG_HEIGHT + 88)
+        x = np.linspace(0, IMG_HEIGHT, NUMBER_OF_POINTS)
+        pts = np.array([cls.calc_fitting_pts(w, x), x], np.int32).transpose()
+        min_error = 1000
+        min_distance = 0
+        min_pt = (0, 0)
+        for pt in pts:
+            error = abs(math_support.distance(pt, rear_axel)-166) 
+            if error < min_error:
+                min_error = error
+                min_distance = math_support.distance(pt, rear_axel)
+                min_pt = pt
+        if min_distance == 0:
+            return 0,0
+        else:
+            pp_vec = min_pt - rear_axel
+            sin_alpha = np.sqrt(2*pp_vec[0]*pp_vec[1]/(pp_vec[0]*pp_vec[0]+pp_vec[1]*pp_vec[1]))
+            return min_distance, sin_alpha

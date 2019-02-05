@@ -119,6 +119,7 @@ class Car(object):
                     paras = self.detector.get_wrapped_all_parameters(image)
                     dc, dm, cur, ss = Car.unpackage_paras(paras)
                     dis_2_tan, pt = Detector.get_distance_2_tan(paras[6:9])
+                    l_d, sin_alpha = Detector.get_distance_angle_pp(paras[6:9])
                     radian_at_tan = atan(paras[14])
                     if waitting_for_ob:
                         ob = img_process.detect_obstacle(ori_image)
@@ -141,7 +142,9 @@ class Car(object):
                         self.contorller.finish_control()
                     else:
                         ## ADP
-                        self.contorller.make_decision_with_policy(1, dis_2_tan, radian_at_tan)
+                        # self.contorller.make_decision_with_policy(1, dis_2_tan, radian_at_tan)
+                        ##pure pursuit
+                        self.contorller.make_decision_with_policy(2, dis_2_tan, radian_at_tan)
                     stream.seek(0)
                     stream.truncate()
 
