@@ -25,3 +25,14 @@ def pure_pursuit(l_d, sin_alpha, amp):
     pwm_r_new = np.clip(pwm_mid + amp * delta, 0.0, 100.0)
     print(delta, l_d, sin_alpha, pwm_l_new, pwm_r_new)
     return pwm_l_new, pwm_r_new
+
+def VBC(Z):
+    """Visual Based Control method
+       Z: distance from center of Axes to the lane center point
+    """
+    pwm_mid = 50.0
+    k = 3.0
+    pwm_l_new = np.clip(pwm_mid + k * Z, 0.0, 100.0)
+    pwm_r_new = np.clip(pwm_mid - k * Z, 0.0, 100.0)
+    print(Z, pwm_l_new, pwm_r_new)
+    return pwm_l_new, pwm_r_new

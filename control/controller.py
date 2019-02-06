@@ -47,6 +47,9 @@ class Controller(object):
             l_d, sin_alpha = args
             amp = 1000
             pwm_l_new, pwm_r_new = policy.pure_pursuit(l_d, sin_alpha, amp)
+        elif policy_type == 3: # Visual Base Controller
+            Z, abc = args
+            pwm_l_new, pwm_r_new = policy.VBC(Z)
         else:
             pwm_l_new, pwm_r_new = 0, 0
             print('Policy Not Found')

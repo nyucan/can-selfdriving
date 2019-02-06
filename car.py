@@ -131,6 +131,7 @@ class Car(object):
                     if self.counter != 0 and self.counter % 400 == 0:
                         np.save(join('.', 'record', 'record'), np.array(self.record))
                     l_d, sin_alpha = Detector.get_distance_angle_pp(paras[6:9])
+                    Z = Detector.get_Z_VBC(paras[6:9])
                     radian_at_tan = atan(paras[14])
                     if waitting_for_ob:
                         ob = img_process.detect_obstacle(ori_image)
@@ -155,7 +156,9 @@ class Car(object):
                         ## ADP
                         # self.contorller.make_decision_with_policy(1, dis_2_tan, radian_at_tan)
                         ## pure pursuit
-                        self.contorller.make_decision_with_policy(2, l_d, sin_alpha)
+                        # self.contorller.make_decision_with_policy(2, l_d, sin_alpha)
+                        ## Visual Based Control
+                        self.contorller.make_decision_with_policy(3, Z, 0)
                     stream.seek(0)
                     stream.truncate()
 

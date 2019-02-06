@@ -236,3 +236,9 @@ class Detector(object):
             sign = 1
         sin_alpha = sign * math.sqrt(float(pp_vec[0]**2)/float(pp_vec[0]**2+pp_vec[1]**2))
         return l_d, sin_alpha
+
+    @classmethod
+    def get_Z_VBC(cls, w):
+        pt = float(cls.calc_fitting_pts(w,23))
+        Z = pt - 80.0
+        return Z
