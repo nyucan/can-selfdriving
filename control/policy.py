@@ -21,7 +21,7 @@ def pure_pursuit(l_d, sin_alpha, amp):
     L = 32
     delta = np.arctan(2*L*sin_alpha/l_d)
     pwm_mid = 50.0
-    pwm_l_new = pwm_mid - amp * delta
-    pwm_r_new = pwm_mid + amp * delta
+    pwm_l_new = np.clip(pwm_mid - amp * delta, 0.0, 100.0)
+    pwm_r_new = np.clip(pwm_mid + amp * delta, 0.0, 100.0)
     print(delta, l_d, sin_alpha, pwm_l_new, pwm_r_new)
     return pwm_l_new, pwm_r_new

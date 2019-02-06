@@ -18,11 +18,11 @@ class Controller(object):
         self.K_im_traj = np.load('./control/K_traj_IM_VI.npy')
         self.dis_sum = 0
         self.threshold = 500
-        # self.init_record()
+        self.init_record()
 
     def init_record(self):
         self.is_recording = True
-        self.counter = 1
+        self.counter = 0
         self.record = []
 
     def finish_control(self):
@@ -45,21 +45,17 @@ class Controller(object):
             pwm_l_new, pwm_r_new = policy.adp(distance_2_tan, radian_at_tan, self.dis_sum, cur_K)
         elif policy_type == 2:  # pure pursuit
             l_d, sin_alpha = args
-            amp = 150
+            self.record.append(sin_alpha)
+            self.counter += 1
+            print(self.counter)
+            if self.counter != 0 and self.counter % 400 == 0:
+                np.save(join('.', 'record', 'record'), np.array(self.record))
+            amp = 300
             pwm_l_new, pwm_r_new = policy.pure_pursuit(l_d, sin_alpha, amp)
         else:
             pwm_l_new, pwm_r_new = 0, 0
             print('Policy Not Found')
         self.motor.motor_set_new_speed(pwm_l_new, pwm_r_new)
-        # -------- recording data --------
-        if self.is_recording:
-            self.counter += 1
-            self.record.append((distance_2_tan, radian_at_tan, self.dis_sum, differential_drive))
-            # check point
-            if self.counter % 100 == 0:
-                np.save(join('.', 'record', 'record'), np.array(self.record))
-            self.counter += 1
-        # --------------------------------
 
     def start(self):
         self.motor.motor_startup()
