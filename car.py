@@ -35,6 +35,12 @@ class Car(object):
         self.detector = Detector()
         self.pre_img_id = -1
         self.cur_img_id = -1
+        self.init_record()
+    
+    def init_record(self):
+        self.is_recording = True
+        self.counter = 0
+        self.record = []
 
     @staticmethod
     def unpackage_paras(packaged_parameters):
@@ -119,6 +125,11 @@ class Car(object):
                     paras = self.detector.get_wrapped_all_parameters(image)
                     dc, dm, cur, ss = Car.unpackage_paras(paras)
                     dis_2_tan, pt = Detector.get_distance_2_tan(paras[6:9])
+                    self.record.append(dis_2_tan)
+                    self.counter += 1
+                    print(self.counter)
+                    if self.counter != 0 and self.counter % 400 == 0:
+                        np.save(join('.', 'record', 'record'), np.array(self.record))
                     l_d, sin_alpha = Detector.get_distance_angle_pp(paras[6:9])
                     radian_at_tan = atan(paras[14])
                     if waitting_for_ob:

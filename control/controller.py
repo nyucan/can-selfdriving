@@ -45,12 +45,7 @@ class Controller(object):
             pwm_l_new, pwm_r_new = policy.adp(distance_2_tan, radian_at_tan, self.dis_sum, cur_K)
         elif policy_type == 2:  # pure pursuit
             l_d, sin_alpha = args
-            self.record.append(sin_alpha)
-            self.counter += 1
-            print(self.counter)
-            if self.counter != 0 and self.counter % 400 == 0:
-                np.save(join('.', 'record', 'record'), np.array(self.record))
-            amp = 300
+            amp = 1000
             pwm_l_new, pwm_r_new = policy.pure_pursuit(l_d, sin_alpha, amp)
         else:
             pwm_l_new, pwm_r_new = 0, 0
