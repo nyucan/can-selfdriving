@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+import math
 
 import os
 from os.path import join
@@ -216,21 +217,22 @@ class Detector(object):
     
     @classmethod
     def get_distance_angle_pp(cls, w):
-        rear_axel = (IMG_WIDTH, IMG_HEIGHT + 88)
+        rear_axel = (80, 136)
+        center_pt = (IMG_WIDTH / 2, IMG_HEIGHT / 2)
         x = np.linspace(0, IMG_HEIGHT, NUMBER_OF_POINTS)
         pts = np.array([cls.calc_fitting_pts(w, x), x], np.int32).transpose()
-        min_error = 1000
-        min_distance = 0
-        min_pt = (0, 0)
+        min_error = 10000
+        l_d = math_support.distance(rear_axel, center_pt)
+        min_pt = (IMG_WIDTH / 2, IMG_HEIGHT / 2)
         for pt in pts:
-            error = abs(math_support.distance(pt, rear_axel)-166) 
+            error = abs(math_support.distance(pt, rear_axel)-l_d) 
             if error < min_error:
                 min_error = error
-                min_distance = math_support.distance(pt, rear_axel)
                 min_pt = pt
-        if min_distance == 0:
-            return 0,0
+        pp_vec = min_pt - rear_axel
+        if pp_vec[0] > 0:
+            sign = -1
         else:
-            pp_vec = min_pt - rear_axel
-            sin_alpha = np.sqrt(2*pp_vec[0]*pp_vec[1]/(pp_vec[0]*pp_vec[0]+pp_vec[1]*pp_vec[1]))
-            return min_distance, sin_alpha
+            sign = 1
+        sin_alpha = sign * math.sqrt(float(pp_vec[0]**2)/float(pp_vec[0]**2+pp_vec[1]**2))
+        return l_d, sin_alpha

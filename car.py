@@ -143,8 +143,8 @@ class Car(object):
                     else:
                         ## ADP
                         # self.contorller.make_decision_with_policy(1, dis_2_tan, radian_at_tan)
-                        ##pure pursuit
-                        self.contorller.make_decision_with_policy(2, dis_2_tan, radian_at_tan)
+                        ## pure pursuit
+                        self.contorller.make_decision_with_policy(2, l_d, sin_alpha)
                     stream.seek(0)
                     stream.truncate()
 

@@ -15,13 +15,13 @@ def adp(distance_2_tan, radian_at_tan, distance_integral, K):
 def pure_pursuit(l_d, sin_alpha, amp):
     """Control with pure persuit method
        L: distance between two wheel
-       alpha: angle error
+       sin_alpha: angle error
        l_d: distance from the vehicle to the center point
     """
     L = 32
     delta = np.arctan(2*L*sin_alpha/l_d)
-    print('pure pursuit:', delta, l_d, sin_alpha)
     pwm_mid = 50.0
     pwm_l_new = pwm_mid - amp * delta
     pwm_r_new = pwm_mid + amp * delta
+    print(delta, l_d, sin_alpha, pwm_l_new, pwm_r_new)
     return pwm_l_new, pwm_r_new
