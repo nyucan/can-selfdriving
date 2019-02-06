@@ -47,18 +47,25 @@ class Controller(object):
             l_d, sin_alpha = args
             amp = 150
             pwm_l_new, pwm_r_new = policy.pure_pursuit(l_d, sin_alpha, amp)
+        elif policy_type == 3:  # Car following with ADP
+            assert len(args) == 3, 'args should be exactly 3'
+            cur_K = -self.K_im_traj[-1]
+            dis_K = 0.08
+            dis2tan, radian_at_tan, dis2car = args
+            self.dis_sum += dis2tan
+            pwm_l_new, pwm_r_new = policy.car_following_with_adp(dis2tan, radian_at_tan, dis2car, self.dis_sum, cur_K, dis_K)
         else:
             pwm_l_new, pwm_r_new = 0, 0
             print('Policy Not Found')
         self.motor.motor_set_new_speed(pwm_l_new, pwm_r_new)
         # -------- recording data --------
-        if self.is_recording:
-            self.counter += 1
-            self.record.append((distance_2_tan, radian_at_tan, self.dis_sum, differential_drive))
-            # check point
-            if self.counter % 100 == 0:
-                np.save(join('.', 'record', 'record'), np.array(self.record))
-            self.counter += 1
+        # if self.is_recording:
+            # self.counter += 1
+            # self.record.append((distance_2_tan, radian_at_tan, self.dis_sum, differential_drive))
+            # # check point
+            # if self.counter % 100 == 0:
+            #     np.save(join('.', 'record', 'record'), np.array(self.record))
+            # self.counter += 1
         # --------------------------------
 
     def start(self):

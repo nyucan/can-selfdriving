@@ -112,10 +112,12 @@ class Car(object):
                 for _ in camera.capture_continuous(stream, format='jpeg', use_video_port=True):
                     stream.seek(0)
                     ori_image = img_process.img_load_from_stream(stream)
+                    # ------------- preprocessing -------------
                     debug_img = img_process.crop_image(ori_image, 0.45, 0.85)
                     debug_img = img_process.down_sample(debug_img, (160, 48))
-                    # debug_img = img_process.birdeye(debug_img)
+                    # debug_img = img_process.birdeye(debug_img) # current do not use birdeye
                     image = img_process.binarize(debug_img)
+                    # ------------------------------------------
                     paras = self.detector.get_wrapped_all_parameters(image)
                     dc, dm, cur, ss = Car.unpackage_paras(paras)
                     dis_2_tan, pt = Detector.get_distance_2_tan(paras[6:9])
@@ -125,8 +127,13 @@ class Car(object):
                         ob = img_process.detect_obstacle(ori_image)
                     # display the fitting result in real time
                     if configs['debug']:
+                        # ------------- 1. display fitting result on the fly -------------
                         debug_img = img_process.compute_debug_image(debug_img, IMG_W, IMG_H, NUM_OF_POINTS, pt, paras)
                         img_process.show_img(debug_img)
+                        # ----------------------------------------------------------------
+                        # ------------- 2. test red filter -------------
+                        estimated_distance = img_process.detect_distance(ori_image)
+                        # ----------------------------------------------
                     if first_start:
                         self.contorller.start()
                         first_start = False
@@ -141,10 +148,12 @@ class Car(object):
                         print('------- stop -------')
                         self.contorller.finish_control()
                     else:
-                        ## ADP
-                        # self.contorller.make_decision_with_policy(1, dis_2_tan, radian_at_tan)
-                        ## pure pursuit
-                        self.contorller.make_decision_with_policy(2, l_d, sin_alpha)
+                        ## 1. ADP
+                        self.contorller.make_decision_with_policy(1, dis_2_tan, radian_at_tan)
+                        ## 2. pure pursuit
+                        # self.contorller.make_decision_with_policy(2, l_d, sin_alpha)
+                        ## 3. Car following with ADP
+                        # self.contorller.make_decision_with_policy(3, dis_2_tan, radian_at_tan, estimated_distance)
                     stream.seek(0)
                     stream.truncate()
 
