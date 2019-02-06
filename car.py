@@ -115,13 +115,13 @@ class Car(object):
                     # ------------- preprocessing -------------
                     debug_img = img_process.crop_image(ori_image, 0.45, 0.85)
                     debug_img = img_process.down_sample(debug_img, (160, 48))
-                    # debug_img = img_process.birdeye(debug_img) # current do not use birdeye
-                    image = img_process.binarize(debug_img)
-                    # ------------------------------------------
+                    # image = img_process.binarize(debug_img)
+                    image = img_process.lane_filter(debug_img, LOW_LANE_COLOR, UPPER_LANE_COLOR)
+                    # -----------------------------------------
                     paras = self.detector.get_wrapped_all_parameters(image)
                     dc, dm, cur, ss = Car.unpackage_paras(paras)
                     dis_2_tan, pt = Detector.get_distance_2_tan(paras[6:9])
-                    l_d, sin_alpha = Detector.get_distance_angle_pp(paras[6:9])
+            
                     radian_at_tan = atan(paras[14])
                     if waitting_for_ob:
                         ob = img_process.detect_obstacle(ori_image)
@@ -132,7 +132,8 @@ class Car(object):
                         img_process.show_img(debug_img)
                         # ----------------------------------------------------------------
                         # ------------- 2. test red filter -------------
-                        estimated_distance = img_process.detect_distance(ori_image)
+                        # estimated_distance = img_process.detect_distance(ori_image)
+                        estimated_distance = 50
                         # ----------------------------------------------
                     if first_start:
                         self.contorller.start()
@@ -151,6 +152,7 @@ class Car(object):
                         ## 1. ADP
                         self.contorller.make_decision_with_policy(1, dis_2_tan, radian_at_tan)
                         ## 2. pure pursuit
+                        # l_d, sin_alpha = Detector.get_distance_angle_pp(paras[6:9])
                         # self.contorller.make_decision_with_policy(2, l_d, sin_alpha)
                         ## 3. Car following with ADP
                         # self.contorller.make_decision_with_policy(3, dis_2_tan, radian_at_tan, estimated_distance)
