@@ -30,6 +30,7 @@ def VBC(Z):
     """Visual Based Control method
        Z: distance from center of Axes to the lane center point
     """
+
     pwm_mid = 50.0
     k = 3.0
     pwm_l_new = np.clip(pwm_mid + k * Z, 0.0, 100.0)

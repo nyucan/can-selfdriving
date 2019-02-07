@@ -35,7 +35,7 @@ class Car(object):
         self.detector = Detector()
         self.pre_img_id = -1
         self.cur_img_id = -1
-        self.init_record()
+        # self.init_record()
     
     def init_record(self):
         self.is_recording = True
@@ -125,14 +125,14 @@ class Car(object):
                     paras = self.detector.get_wrapped_all_parameters(image)
                     dc, dm, cur, ss = Car.unpackage_paras(paras)
                     dis_2_tan, pt = Detector.get_distance_2_tan(paras[6:9])
-                    self.record.append(dis_2_tan)
-                    self.counter += 1
-                    print(self.counter)
-                    if self.counter != 0 and self.counter % 400 == 0:
-                        np.save(join('.', 'record', 'record'), np.array(self.record))
                     l_d, sin_alpha = Detector.get_distance_angle_pp(paras[6:9])
                     Z = Detector.get_Z_VBC(paras[6:9])
                     radian_at_tan = atan(paras[14])
+                    # self.record.append((dis_2_tan,))
+                    # self.counter += 1
+                    # print(self.counter)
+                    # if self.counter != 0 and self.counter % 200 == 0:
+                    #     np.save(join('.', 'record', 'record'), np.array(self.record))
                     if waitting_for_ob:
                         ob = img_process.detect_obstacle(ori_image)
                     # display the fitting result in real time
@@ -156,9 +156,9 @@ class Car(object):
                         ## ADP
                         # self.contorller.make_decision_with_policy(1, dis_2_tan, radian_at_tan)
                         ## pure pursuit
-                        # self.contorller.make_decision_with_policy(2, l_d, sin_alpha)
+                        self.contorller.make_decision_with_policy(2, l_d, sin_alpha, dis_2_tan, radian_at_tan)
                         ## Visual Based Control
-                        self.contorller.make_decision_with_policy(3, Z, 0)
+                        # self.contorller.make_decision_with_policy(3, Z, dis_2_tan, radian_at_tan)
                     stream.seek(0)
                     stream.truncate()
 
