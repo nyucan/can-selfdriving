@@ -4,6 +4,7 @@ from __future__ import absolute_import, division, print_function
 from math import floor
 import cv2
 import numpy as np
+from time import time
 
 LOW_LANE_COLOR = np.uint8([[[0,0,0]]])
 UPPER_LANE_COLOR = np.uint8([[[0,0,0]]]) + 40
@@ -77,10 +78,9 @@ def standard_preprocess(img, crop=True, down=True, f=True, binary=True):
 def red_filter(rgb_img):
     hsv = cv2.cvtColor(rgb_img, cv2.COLOR_BGR2HSV)
     res1 = cv2.inRange(hsv, np.array([0, 70, 50]), np.array([10, 255, 255]))
-    res2 = cv2.inRange(hsv, np.array([170, 70, 50]), np.array([180, 255, 255]))
-    res = res1 + res2
-    res = cv2.morphologyEx(res, cv2.MORPH_CLOSE, np.ones((3, 3), np.uint8))
-    return res
+    # res2 = cv2.inRange(hsv, np.array([170, 70, 50]), np.array([180, 255, 255]))
+    # res = res1 + res2
+    return res1
 
 
 def get_rectangle(contours):
@@ -119,19 +119,23 @@ def img_load_from_stream(stream):
 def detect_distance(img):
     """ Detect obstacle based on red pixels on the original image.
     """
+    down_img = cv2.resize(img, dsize=None, fx=0.25, fy=0.25)
     red_img = red_filter(img)
-    cam_dist = 100 # max distance
+    cam_dist = 120 # max distance
     try:
         contours, hierarchy = cv2.findContours(red_img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         x, y, w, h = get_rectangle(contours)
         # cv2.rectangle(red_img, (x,y), (x+w,y+h), (255,0,0), 2) # for debug only
         # show_img(red_img)
-        cam_dist = 5400 // w   # distance in cm
-        print(cam_dist)
+        # cam_dist = 5400 // w   # distance in cm
+        cam_dist = 1350 // w
     except ValueError:
-        cam_dist = 100
+        cam_dist = 120
     finally:
-        return cam_dist
+        if cam_dist > 120:
+            return 120
+        else:
+            return cam_dist
 
 
 def img_save(img, path):

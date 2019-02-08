@@ -23,9 +23,6 @@ import client
 IMG_W = configs['data']['image_width']
 IMG_H = configs['data']['image_height']
 NUM_OF_POINTS = configs['fitting']['num_of_points']
-LOW_LANE_COLOR = np.uint8([[[0,0,0]]])
-UPPER_LANE_COLOR = np.uint8([[[0,0,0]]]) + 40
-CENTER_W, CENTER_H = int(IMG_W / 2), int(IMG_H / 2)
 
 class Car(object):
     """ Offline car-control, with only one thread.
@@ -110,13 +107,14 @@ class Car(object):
         with picamera.PiCamera(resolution='VGA') as camera:
             with io.BytesIO() as stream:
                 for _ in camera.capture_continuous(stream, format='jpeg', use_video_port=True):
+                    start_time = time.time()
                     stream.seek(0)
                     ori_image = img_process.img_load_from_stream(stream)
                     # ------------- preprocessing -------------
                     debug_img = img_process.crop_image(ori_image, 0.45, 0.85)
                     debug_img = img_process.down_sample(debug_img, (160, 48))
-                    # image = img_process.binarize(debug_img)
-                    image = img_process.lane_filter(debug_img, LOW_LANE_COLOR, UPPER_LANE_COLOR)
+                    image = img_process.binarize(debug_img)
+                    # image = img_process.lane_filter(debug_img, np.uint8([[[0,0,0]]]), np.uint8([[[40,40,40]]]))
                     # -----------------------------------------
                     paras = self.detector.get_wrapped_all_parameters(image)
                     dc, dm, cur, ss = Car.unpackage_paras(paras)
@@ -131,10 +129,6 @@ class Car(object):
                         debug_img = img_process.compute_debug_image(debug_img, IMG_W, IMG_H, NUM_OF_POINTS, pt, paras)
                         img_process.show_img(debug_img)
                         # ----------------------------------------------------------------
-                        # ------------- 2. test red filter -------------
-                        # estimated_distance = img_process.detect_distance(ori_image)
-                        estimated_distance = 50
-                        # ----------------------------------------------
                     if first_start:
                         self.contorller.start()
                         first_start = False
@@ -144,18 +138,25 @@ class Car(object):
                         print("attampting to avoid ...")
                         self.contorller.collision_avoid(time.time())
                         waitting_for_ob = False
-                    elif ss:
-                        ## Stop the car
-                        print('------- stop -------')
-                        self.contorller.finish_control()
+                    # elif ss:
+                    #     ## Stop the car
+                    #     print('------- stop -------')
+                    #     self.contorller.finish_control()
                     else:
                         ## 1. ADP
-                        self.contorller.make_decision_with_policy(1, dis_2_tan, radian_at_tan)
+                        # self.contorller.make_decision_with_policy(1, dis_2_tan, radian_at_tan)
                         ## 2. pure pursuit
                         # l_d, sin_alpha = Detector.get_distance_angle_pp(paras[6:9])
                         # self.contorller.make_decision_with_policy(2, l_d, sin_alpha)
                         ## 3. Car following with ADP
-                        # self.contorller.make_decision_with_policy(3, dis_2_tan, radian_at_tan, estimated_distance)
+                        print('using ' + str(time.time() - start_time) + ' second to calculate')
+                        detect_time = time.time()
+                        estimated_distance = img_process.detect_distance(ori_image)
+                        # estimated_distance = 50
+                        print('using ' + str(time.time() - detect_time) + ' second to detect distance')
+                        self.contorller.make_decision_with_policy(3, dis_2_tan, radian_at_tan, estimated_distance)
+                        ## 4. Car followings
+                        # self.contorller.make_decision_with_policy(4, estimated_distance)
                     stream.seek(0)
                     stream.truncate()
 
