@@ -78,9 +78,9 @@ def standard_preprocess(img, crop=True, down=True, f=True, binary=True):
 def red_filter(rgb_img):
     hsv = cv2.cvtColor(rgb_img, cv2.COLOR_BGR2HSV)
     res1 = cv2.inRange(hsv, np.array([0, 70, 50]), np.array([10, 255, 255]))
-    # res2 = cv2.inRange(hsv, np.array([170, 70, 50]), np.array([180, 255, 255]))
-    # res = res1 + res2
-    return res1
+    res2 = cv2.inRange(hsv, np.array([170, 70, 50]), np.array([180, 255, 255]))
+    res = res1 + res2
+    return res
 
 
 def get_rectangle(contours):
@@ -119,22 +119,22 @@ def img_load_from_stream(stream):
 def detect_distance(img):
     """ Detect obstacle based on red pixels on the original image.
     """
-    cropped_img = crop_image(img, 0, 0.5)
-    down_img = cv2.resize(cropped_img, dsize=None, fx=0.5, fy=0.5)
+    # cropped_img = crop_image(img, 0, 0.7)
+    down_img = cv2.resize(img, dsize=None, fx=0.5, fy=0.5)
     red_img = red_filter(down_img)
-    cam_dist = 120 # max distance
+    cam_dist = 10000 # max distance
     try:
         contours, hierarchy = cv2.findContours(red_img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         x, y, w, h = get_rectangle(contours)
-        # cv2.rectangle(red_img, (x,y), (x+w,y+h), (255,0,0), 2) # for debug only
-        # show_img(red_img)
+        cv2.rectangle(red_img, (x,y), (x+w,y+h), (255,0,0), 2) # for debug only
+        show_img(red_img)
         # cam_dist = 5400 // w   # distance in cm
         cam_dist = 2700 // w
     except ValueError:
-        cam_dist = 120
+        cam_dist = 10000
     finally:
-        if cam_dist > 120:
-            return 120
+        if cam_dist >= 120:
+            return 10000
         else:
             return cam_dist
 
@@ -168,13 +168,7 @@ def enlarge_img(img, times):
 
 def show_img(img, is_bin=False, winname="Test", pos=(40, 30)):
     if is_bin:
-        # restore
         img *= 255
-        # for i in range(len(img)):
-        #     if img[i] == 1:
-        #         img[i] == (255, 255, 255)
-        #     else:
-        #         img[i] == (0, 0, 0)
     cv2.namedWindow(winname)        # Create a named window
     cv2.moveWindow(winname, pos[0], pos[1])  # Move it to (40,30)
     cv2.imshow(winname, img)
