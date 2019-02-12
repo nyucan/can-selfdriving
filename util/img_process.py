@@ -119,8 +119,9 @@ def img_load_from_stream(stream):
 def detect_distance(img):
     """ Detect obstacle based on red pixels on the original image.
     """
-    down_img = cv2.resize(img, dsize=None, fx=0.25, fy=0.25)
-    red_img = red_filter(img)
+    cropped_img = crop_image(img, 0, 0.5)
+    down_img = cv2.resize(cropped_img, dsize=None, fx=0.5, fy=0.5)
+    red_img = red_filter(down_img)
     cam_dist = 120 # max distance
     try:
         contours, hierarchy = cv2.findContours(red_img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
@@ -128,7 +129,7 @@ def detect_distance(img):
         # cv2.rectangle(red_img, (x,y), (x+w,y+h), (255,0,0), 2) # for debug only
         # show_img(red_img)
         # cam_dist = 5400 // w   # distance in cm
-        cam_dist = 1350 // w
+        cam_dist = 2700 // w
     except ValueError:
         cam_dist = 120
     finally:
@@ -177,7 +178,7 @@ def show_img(img, is_bin=False, winname="Test", pos=(40, 30)):
     cv2.namedWindow(winname)        # Create a named window
     cv2.moveWindow(winname, pos[0], pos[1])  # Move it to (40,30)
     cv2.imshow(winname, img)
-    cv2.waitKey(10)
+    cv2.waitKey(5)
 
 
 def calc_fitting_pts(w, x):
