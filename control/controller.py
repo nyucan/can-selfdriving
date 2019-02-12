@@ -18,7 +18,7 @@ class Controller(object):
         self.K_im_traj = np.load('./control/K_traj_IM_VI.npy')
         self.dis_sum = 0
         self.threshold = 500
-        # self.init_record()
+        self.init_record()
 
     def init_record(self):
         self.is_recording = True
@@ -28,8 +28,6 @@ class Controller(object):
     def finish_control(self):
         print('contorller: stop')
         self.motor.motor_stop()
-        if self.is_recording:
-            np.save(join('.', 'record', 'record'), np.array(self.record))
 
     def make_decision_with_policy(self, policy_type, *args):
         """ Make decision with different policies.
@@ -52,7 +50,11 @@ class Controller(object):
             cur_K = -self.K_im_traj[-1]
             distance_2_tan, radian_at_tan, estimated_dis = args
             self.dis_sum += distance_2_tan
-            pwm_l_new, pwm_r_new = policy.car_following_with_adp(distance_2_tan, radian_at_tan, self.dis_sum, cur_K, estimated_dis)
+            if self.is_recording and self.counter % 100 == 0:
+                np.save('./.out/record', self.record)
+            pwm_l_new, pwm_r_new = policy.car_following_with_adp(distance_2_tan, radian_at_tan, self.dis_sum, cur_K, estimated_dis, self.record)
+            print(self.counter)
+            self.counter += 1
         elif policy_type == 4:
             K = 0.5
             dis2car, = args

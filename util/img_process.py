@@ -126,8 +126,8 @@ def detect_distance(img):
     try:
         contours, hierarchy = cv2.findContours(red_img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         x, y, w, h = get_rectangle(contours)
-        cv2.rectangle(red_img, (x,y), (x+w,y+h), (255,0,0), 2) # for debug only
-        show_img(red_img)
+        # cv2.rectangle(red_img, (x,y), (x+w,y+h), (255,0,0), 2) # for debug only
+        # show_img(red_img)
         # cam_dist = 5400 // w   # distance in cm
         cam_dist = 2700 // w
     except ValueError:

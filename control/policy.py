@@ -28,15 +28,15 @@ def pure_pursuit(l_d, sin_alpha, amp):
     return pwm_l_new, pwm_r_new
 
 
-def car_following_with_adp(distance_2_tan, radian_at_tan, distance_integral, K, estimated_dis):
+def car_following_with_adp(distance_2_tan, radian_at_tan, distance_integral, K, estimated_dis, rec):
     """ Control with `distance_2_tan`, `radian_at_tan` and `distance_integral`
         with `K` trained from the ADP algorithm.
         While following the car in front of it with a simple P controller and `distance_2_car`.
     """
     state = np.array([distance_2_tan, radian_at_tan, distance_integral])
-    MID_K = 0.3
+    MID_K = 0.1
     diff = estimated_dis - 70  # try to stay 70cm away from the previous car
-    pwm_mid = 45
+    pwm_mid = 50
     if diff < -40:
         return 0, 0
     elif diff >= 50:
@@ -44,6 +44,7 @@ def car_following_with_adp(distance_2_tan, radian_at_tan, distance_integral, K, 
     else:
         pwm_mid = np.clip(45.0 + MID_K * diff, 30, 55)
     print('distance:', estimated_dis, 'diff:', diff, 'mid:', pwm_mid)
+    rec.append([estimated_dis, pwm_mid, distance_2_tan, radian_at_tan, distance_integral])
     differential_drive = np.clip(-np.matmul(K, state), -100.0, 100.0)
     pwm_l_new = np.clip(pwm_mid - differential_drive / 2, 0, 100)
     pwm_r_new = np.clip(pwm_mid + differential_drive / 2, 0, 100)

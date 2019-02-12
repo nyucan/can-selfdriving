@@ -136,7 +136,7 @@ class Car(object):
                         # ------------- 1. display fitting result on the fly -------------
                         # st = time.time()
                         debug_img = img_process.compute_debug_image(debug_img, IMG_W, IMG_H, NUM_OF_POINTS, pt, paras)
-                        # img_process.show_img(debug_img)
+                        img_process.show_img(debug_img)
                         # print('compute debug img time:', time.time() - st)
                         # ----------------------------------------------------------------
                     if first_start:

@@ -172,7 +172,6 @@ class Detector(object):
         """ Calculate the distance to tangent point.
             pts: [pos_on_width, pos_on_height] (y, x)
         """
-        # center_pt = (IMG_WIDTH / 2, IMG_HEIGHT / 2)
         center_pt = (IMG_WIDTH / 2, IMG_HEIGHT / 2)
         x = np.linspace(0, IMG_HEIGHT, NUMBER_OF_POINTS)
         pts = np.array([cls.calc_fitting_pts(w, x), x], np.int32).transpose()
