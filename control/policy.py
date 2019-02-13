@@ -7,7 +7,7 @@ def adp(distance_2_tan, radian_at_tan, distance_integral, K):
     state = np.array([distance_2_tan, radian_at_tan, distance_integral])
     differential_drive = np.clip(-np.matmul(K, state), -100.0, 100.0)
     print('ADP controller:', distance_2_tan, radian_at_tan)
-    pwm_mid = 55
+    pwm_mid = 35
     pwm_l_new = np.clip(pwm_mid - differential_drive / 2, 0, 100)
     pwm_r_new = np.clip(pwm_mid + differential_drive / 2, 0, 100)
     return pwm_l_new, pwm_r_new

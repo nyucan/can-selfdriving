@@ -132,13 +132,13 @@ class Car(object):
                     if waitting_for_ob:
                         ob = img_process.detect_obstacle(ori_image)
                     # display the fitting result in real time
-                    if configs['debug']:
-                        # ------------- 1. display fitting result on the fly -------------
-                        # st = time.time()
-                        debug_img = img_process.compute_debug_image(debug_img, IMG_W, IMG_H, NUM_OF_POINTS, pt, paras)
-                        # img_process.show_img(debug_img)
-                        # print('compute debug img time:', time.time() - st)
-                        # ----------------------------------------------------------------
+                    # if configs['debug']:
+                    #     # ------------- 1. display fitting result on the fly -------------
+                    #     # st = time.time()
+                    #     debug_img = img_process.compute_debug_image(debug_img, IMG_W, IMG_H, NUM_OF_POINTS, pt, paras)
+                    #     img_process.show_img(debug_img)
+                    #     # print('compute debug img time:', time.time() - st)
+                    #     # ----------------------------------------------------------------
                     if first_start:
                         self.contorller.start()
                         first_start = False
@@ -155,13 +155,13 @@ class Car(object):
                     else:
                         # st = time.time()
                         ## 1. ADP
-                        # self.contorller.make_decision_with_policy(1, dis_2_tan, radian_at_tan)
+                        self.contorller.make_decision_with_policy(1, dis_2_tan, radian_at_tan)
                         ## 2. pure pursuit
                         # l_d, sin_alpha = Detector.get_distance_angle_pp(paras[6:9])
                         # self.contorller.make_decision_with_policy(2, l_d, sin_alpha)
                         ## 3. Car following with ADP
-                        estimated_distance = img_process.detect_distance(ori_image)
-                        self.contorller.make_decision_with_policy(3, dis_2_tan, radian_at_tan, estimated_distance)
+                        # estimated_distance = img_process.detect_distance(ori_image)
+                        # self.contorller.make_decision_with_policy(3, dis_2_tan, radian_at_tan, estimated_distance)
                         # print('decision time: ', time.time() - st)
                         ## 4. Car followings
                         # self.contorller.make_decision_with_policy(4, estimated_distance)
