@@ -36,13 +36,13 @@ def car_following_with_adp(distance_2_tan, radian_at_tan, distance_integral, K, 
     state = np.array([distance_2_tan, radian_at_tan, distance_integral])
     MID_K = 0.1
     diff = estimated_dis - 70  # try to stay 70cm away from the previous car
-    pwm_mid = 50
+    pwm_mid = 60
     if diff < -40:
         return 0, 0
-    elif diff >= 50:
-        pwm_mid = 50
+    elif diff >= 60:
+        pwm_mid = 60
     else:
-        pwm_mid = np.clip(45.0 + MID_K * diff, 30, 55)
+        pwm_mid = np.clip(45.0 + MID_K * diff, 30, 60)
     print('distance:', estimated_dis, 'diff:', diff, 'mid:', pwm_mid)
     rec.append([estimated_dis, pwm_mid, distance_2_tan, radian_at_tan, distance_integral])
     differential_drive = np.clip(-np.matmul(K, state), -100.0, 100.0)

@@ -122,19 +122,20 @@ def detect_distance(img):
     # cropped_img = crop_image(img, 0, 0.7)
     down_img = cv2.resize(img, dsize=None, fx=0.5, fy=0.5)
     red_img = red_filter(down_img)
-    cam_dist = 10000 # max distance
+    cam_dist = 130 # max distance
     try:
         contours, hierarchy = cv2.findContours(red_img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         x, y, w, h = get_rectangle(contours)
-        # cv2.rectangle(red_img, (x,y), (x+w,y+h), (255,0,0), 2) # for debug only
-        # show_img(red_img)
+        cv2.rectangle(red_img, (x,y), (x+w,y+h), (255,0,0), 2) # for debug only
+        show_img(red_img, False, "Coutour", (340, 30))
+        show_img(down_img, False, "Down", (40, 30))
         # cam_dist = 5400 // w   # distance in cm
         cam_dist = 2700 // w
     except ValueError:
-        cam_dist = 10000
+        cam_dist = 130
     finally:
-        if cam_dist >= 120:
-            return 10000
+        if cam_dist > 120:
+            return 130
         else:
             return cam_dist
 
