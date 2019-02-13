@@ -34,7 +34,7 @@ def car_following_with_adp(distance_2_tan, radian_at_tan, distance_integral, K, 
         While following the car in front of it with a simple P controller and `distance_2_car`.
     """
     state = np.array([distance_2_tan, radian_at_tan, distance_integral])
-    MID_K = 1
+    MID_K = 1.5
     diff = estimated_dis - 70  # try to stay 70cm away from the previous car
     pwm_mid = 60
     if diff < -40:
