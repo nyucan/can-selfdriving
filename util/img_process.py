@@ -4,6 +4,7 @@ from __future__ import absolute_import, division, print_function
 from math import floor
 import cv2
 import numpy as np
+from time import time
 
 LOW_LANE_COLOR = np.uint8([[[0,0,0]]])
 UPPER_LANE_COLOR = np.uint8([[[0,0,0]]]) + 40
@@ -45,8 +46,8 @@ def binarize(img):
 
 
 def thresh_frame_sobel(frame, kernel_size):
-    """
-    Apply Sobel edge detection to an input frame, then threshold the result
+    """ Apply Sobel edge detection to an input frame, then threshold the result.
+        @comment: works not very well = =
     """
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     sobel_x = cv2.Sobel(gray, cv2.CV_64F, 1, 0, ksize=kernel_size)
@@ -72,6 +73,22 @@ def standard_preprocess(img, crop=True, down=True, f=True, binary=True):
     if binary:
         img = img / 255
     return img
+
+
+def red_filter(rgb_img):
+    hsv = cv2.cvtColor(rgb_img, cv2.COLOR_BGR2HSV)
+    res1 = cv2.inRange(hsv, np.array([0, 70, 50]), np.array([10, 255, 255]))
+    res2 = cv2.inRange(hsv, np.array([170, 70, 50]), np.array([180, 255, 255]))
+    res = res1 + res2
+    return res
+
+
+def get_rectangle(contours):
+    areas = [cv2.contourArea(c) for c in contours]
+    max_ind = np.argmax(areas)
+    cnt = contours[max_ind]
+    x, y, w, h = cv2.boundingRect(cnt)
+    return x, y, w, h
 
 
 def lane_filter(img, lower_lane_color, upper_lane_color):
@@ -102,21 +119,23 @@ def img_load_from_stream(stream):
 def detect_distance(img):
     """ Detect obstacle based on red pixels on the original image.
     """
-    top = int(img.shape[0] * 0.18)
-    bottom = int(img.shape[0] * 0.25)
-    left = int(img.shape[1] * 0.4)
-    right = int(img.shape[1] * 0.6)
-    img = img[top:bottom, left:right]
-    # bgrsum = np.sum(np.sum(img, 1), 0)
-    # redsum = bgrsum[2] - bgrsum[1] - bgrsum[0] 
-    RED_MIN = np.array([0, 0, 0], np.uint8)
-    RED_MAX = np.array([50, 50, 255], np.uint8)
-    dst = cv2.inRange(img, RED_MIN, RED_MAX)
-    redsum = cv2.countNonZero(dst)
-    if redsum > 800:
-        return True
-    else:
-        return False
+    down_img = cv2.resize(img, dsize=None, fx=0.5, fy=0.5)
+    red_img = red_filter(down_img)
+    cam_dist = 120 # max distance
+    try:
+        contours, hierarchy = cv2.findContours(red_img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        x, y, w, h = get_rectangle(contours)
+        # cv2.rectangle(red_img, (x,y), (x+w,y+h), (255,0,0), 2) # for debug only
+        # show_img(red_img, False, "Coutour", (340, 30))
+        # show_img(down_img, False, "Down", (40, 30))
+        cam_dist = 2700 // w
+    except ValueError:
+        cam_dist = 120
+    finally:
+        if cam_dist > 120:
+            return 120
+        else:
+            return 2 * np.arcsin(cam_dist / (2 * 103.)) * 103.
 
 
 def img_save(img, path):
@@ -148,16 +167,11 @@ def enlarge_img(img, times):
 
 def show_img(img, is_bin=False, winname="Test", pos=(40, 30)):
     if is_bin:
-        # restore
-        for i in range(len(img)):
-            if img[i] == 1:
-                img[i] == (255, 255, 255)
-            else:
-                img[i] == (0, 0, 0)
+        img *= 255
     cv2.namedWindow(winname)        # Create a named window
     cv2.moveWindow(winname, pos[0], pos[1])  # Move it to (40,30)
     cv2.imshow(winname, img)
-    cv2.waitKey(10)
+    cv2.waitKey(5)
 
 
 def calc_fitting_pts(w, x):

@@ -10,8 +10,10 @@ import threading
 import socket
 from math import atan, floor
 from os.path import join
+
 import numpy as np
-from PIL import Image
+import cv2
+# from PIL import Image
 
 from control.controller import Controller
 from control.processImage import processImage
@@ -23,9 +25,6 @@ import client
 IMG_W = configs['data']['image_width']
 IMG_H = configs['data']['image_height']
 NUM_OF_POINTS = configs['fitting']['num_of_points']
-LOW_LANE_COLOR = np.uint8([[[0,0,0]]])
-UPPER_LANE_COLOR = np.uint8([[[0,0,0]]]) + 40
-CENTER_W, CENTER_H = int(IMG_W / 2), int(IMG_H / 2)
 
 class Car(object):
     """ Offline car-control, with only one thread.
@@ -112,20 +111,25 @@ class Car(object):
                 for _ in camera.capture_continuous(stream, format='jpeg', use_video_port=True):
                     stream.seek(0)
                     ori_image = img_process.img_load_from_stream(stream)
+                    # ------------- preprocessing -------------
                     debug_img = img_process.crop_image(ori_image, 0.45, 0.85)
                     debug_img = img_process.down_sample(debug_img, (160, 48))
-                    # debug_img = img_process.birdeye(debug_img)
                     image = img_process.binarize(debug_img)
+                    # -----------------------------------------
+                    # st = time.time()
                     paras = self.detector.get_wrapped_all_parameters(image)
                     dc, dm, cur, ss = Car.unpackage_paras(paras)
                     dis_2_tan, pt = Detector.get_distance_2_tan(paras[6:9])
                     radian_at_tan = atan(paras[14])
+                    # print('detect time.:', time.time() - st)
                     if waitting_for_ob:
                         ob = img_process.detect_obstacle(ori_image)
                     # display the fitting result in real time
                     if configs['debug']:
+                        # ------------- 1. display fitting result on the fly -------------
                         debug_img = img_process.compute_debug_image(debug_img, IMG_W, IMG_H, NUM_OF_POINTS, pt, paras)
                         img_process.show_img(debug_img)
+                        # ----------------------------------------------------------------
                     if first_start:
                         self.contorller.start()
                         first_start = False
@@ -133,15 +137,24 @@ class Car(object):
                     if waitting_for_ob and ob:
                         ob = False
                         print("attampting to avoid ...")
-                        self.contorller.collision_avoid(time.time())
+                        # self.contorller.collision_avoid(time.time())
                         waitting_for_ob = False
-                    elif ss:
-                        ## Stop the car
-                        print('------- stop -------')
-                        self.contorller.finish_control()
                     else:
-                        ## ADP
-                        self.contorller.make_decision_with_policy(1, dis_2_tan, radian_at_tan)
+                        # st = time.time()
+                        ## 1. ADP
+                        # self.contorller.make_decision_with_policy(1, dis_2_tan, radian_at_tan)
+                        ## 2. pure pursuit
+                        # l_d, sin_alpha = Detector.get_distance_angle_pp(paras[6:9])
+                        # self.contorller.make_decision_with_policy(2, l_d, sin_alpha)
+                        ## 3. Car following with ADP
+                        d_arc = img_process.detect_distance(ori_image)
+                        print(d_arc)
+                        # self.contorller.make_decision_with_policy(3, dis_2_tan, radian_at_tan, d_arc)
+                        # print('decision time: ', time.time() - st)
+                        ## 4. Car followings on stright lane
+                        # self.contorller.make_decision_with_policy(4, d_arc)
+                        ## 5. Coupled controller - Car following
+                        self.contorller.make_decision_with_policy(5, d_arc, dis_2_tan, radian_at_tan)
                     stream.seek(0)
                     stream.truncate()
 
@@ -159,13 +172,13 @@ class Car(object):
             time.sleep(1)
             stream = io.BytesIO()
             for _ in camera.capture_continuous(stream, 'jpeg', use_video_port=True):
-                start_time = time.time()
+                # start_time = time.time()
                 self.send_images(connection, stream)
                 self.recv_parameters(client_socket)
                 if first_start:
                     self.contorller.start()
                     first_start = False
-                print('processed img ' + str(self.cur_img_id), time.time() - start_time)
+                # print('processed img ' + str(self.cur_img_id), time.time() - start_time)
         connection.write(struct.pack('<L', 0))
         connection.close()
         client_socket.close()

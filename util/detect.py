@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+import math
 
 import os
 from os.path import join
@@ -213,4 +214,25 @@ class Detector(object):
         poly_fit = np.poly1d(w)
         y_fitted = poly_fit(x)
         return y_fitted
-
+    
+    @classmethod
+    def get_distance_angle_pp(cls, w):
+        rear_axel = (80, 136)
+        center_pt = (IMG_WIDTH / 2, IMG_HEIGHT / 2)
+        x = np.linspace(0, IMG_HEIGHT, NUMBER_OF_POINTS)
+        pts = np.array([cls.calc_fitting_pts(w, x), x], np.int32).transpose()
+        min_error = 10000
+        l_d = math_support.distance(rear_axel, center_pt)
+        min_pt = (IMG_WIDTH / 2, IMG_HEIGHT / 2)
+        for pt in pts:
+            error = abs(math_support.distance(pt, rear_axel)-l_d) 
+            if error < min_error:
+                min_error = error
+                min_pt = pt
+        pp_vec = min_pt - rear_axel
+        if pp_vec[0] > 0:
+            sign = -1
+        else:
+            sign = 1
+        sin_alpha = sign * math.sqrt(float(pp_vec[0]**2)/float(pp_vec[0]**2+pp_vec[1]**2))
+        return l_d, sin_alpha
