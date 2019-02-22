@@ -4,10 +4,14 @@ import io
 from math import floor
 import numpy as np
 from time import sleep, time
-from os.path import join
+# from os import listdir
+
+from os.path import join, isfile
 
 from control.motor import Motor
 from control import policy
+
+# input_file_names = [f for f in listdir(input_dir) if isfile(join(input_dir, f))]
 
 
 class Controller(object):
@@ -17,8 +21,37 @@ class Controller(object):
         self.is_recording = False
         self.K_im_traj = np.load('./control/K_traj_IM_VI.npy')
         # self.K_coupled = np.load('./control/coupled_k/0221.npy')
-        # self.K_coupled = np.load('./control/coupled_k/controllers-0221/controller_q11_01_q_22_01_q_33_05npy.npy')
-        self.K_coupled = np.load('./control/coupled_k/controllers-0221/controller_q11_01_q_22_01_q_33_005npy.npy')
+        self.testing_Ks = [
+            'controller_q11_100_q_22_10_q_33_05npy.npy',
+            'controller_q11_10_q_22_100_q_33_50npy.npy',
+            'controller_q11_100_q_22_01_q_33_05npy.npy', # best for now
+            'controller_q11_10_q_22_100_q_33_05npy.npy',
+            'controller_q11_10_q_22_10_q_33_005npy.npy',
+            'controller_q11_10_q_22_100_q_33_005npy.npy',
+            'controller_q11_100_q_22_01_q_33_005npy.npy',
+            'controller_q11_100_q_22_10_q_33_50npy.npy',
+            'controller_q11_100_q_22_100_q_33_05npy.npy',
+            'controller_q11_01_q_22_100_q_33_005npy.npy',
+            'controller_q11_01_q_22_10_q_33_005npy.npy',
+            'controller_q11_10_q_22_10_q_33_05npy.npy',
+            'controller_q11_01_q_22_01_q_33_005npy.npy',
+            'controller_q11_01_q_22_100_q_33_05npy.npy',
+            'controller_q11_10_q_22_01_q_33_50npy.npy',
+            'controller_q11_100_q_22_100_q_33_50npy.npy',
+            'controller_q11_01_q_22_10_q_33_05npy.npy',
+            'controller_q11_01_q_22_10_q_33_50npy.npy',
+            'controller_q11_01_q_22_100_q_33_50npy.npy',
+            'controller_q11_01_q_22_01_q_33_05npy.npy',
+            'controller_q11_100_q_22_100_q_33_005npy.npy',
+            'controller_q11_10_q_22_01_q_33_05npy.npy',
+            'controller_q11_01_q_22_01_q_33_50npy.npy',
+            'controller_q11_10_q_22_01_q_33_005npy.npy',
+            'controller_q11_100_q_22_01_q_33_50npy.npy',
+            'controller_q11_100_q_22_10_q_33_005npy.npy',
+            'controller_q11_10_q_22_10_q_33_50npy.npy'
+        ]
+        self.K_coupled = np.load('./control/coupled_k/controllers-0221/' + self.testing_Ks[0])
+        
         self.dis_sum = 0
         self.z = np.zeros((2))
         self.threshold = 500
@@ -56,11 +89,7 @@ class Controller(object):
             cur_K = -self.K_im_traj[-1]
             distance_2_tan, radian_at_tan, estimated_dis = args
             self.dis_sum += distance_2_tan
-            if self.is_recording and self.counter % 100 == 0:
-                np.save('./.out/record', self.record)
-            pwm_l_new, pwm_r_new = policy.car_following_with_adp(distance_2_tan, radian_at_tan, self.dis_sum, cur_K, estimated_dis, self.record)
-            print(self.counter)
-            self.counter += 1
+            pwm_l_new, pwm_r_new = policy.car_following_with_adp(distance_2_tan, radian_at_tan, self.dis_sum, cur_K, estimated_dis)
         elif policy_type == 4:
             K = 0.5
             dis2car, = args
@@ -70,7 +99,7 @@ class Controller(object):
                 np.save('./.out/record', self.record)
             d_arc, d_curve, theta = args
             pwm_l_new, pwm_r_new = policy.adp_coupled_car_following(d_arc, d_curve, theta, self.z, self.K_coupled, self.record)
-            print(self.counter)
+            print('counter: ', self.counter)
             self.counter += 1
         else:
             pwm_l_new, pwm_r_new = 0, 0

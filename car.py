@@ -33,7 +33,7 @@ class Car(object):
     def __init__(self):
         self.contorller = Controller()
         self.detector = Detector()
-        self.filter = LowPass(1)
+        self.filter = LowPass(5)
         self.pre_img_id = -1
         self.cur_img_id = -1
 
@@ -104,7 +104,7 @@ class Car(object):
                 self.contorller.make_decision_with_policy(1, d2t, aot)
             self.pre_img_id = img_id
 
-    def offline_main(self, ori_image):
+    def offline_main(self, ori_image, debug=True):
         # ------------- preprocessing -------------
         debug_img = img_process.crop_image(ori_image, 0.45, 0.85)
         debug_img = img_process.down_sample(debug_img, (160, 48))
@@ -114,11 +114,9 @@ class Car(object):
         dc, dm, cur, ss = Car.unpackage_paras(paras)
         dis_2_tan, pt = Detector.get_distance_2_tan(paras[6:9])
         radian_at_tan = atan(paras[14])
-        # if configs['debug']: # display the fitting result in real time
-            # ------------- 1. display fitting result on the fly -------------
-            # debug_img = img_process.compute_debug_image(debug_img, IMG_W, IMG_H, NUM_OF_POINTS, pt, paras)
-            # img_process.show_img(debug_img)
-            # ----------------------------------------------------------------
+        if debug: # display the fitting result in real time
+            debug_img = img_process.compute_debug_image(debug_img, IMG_W, IMG_H, NUM_OF_POINTS, pt, paras)
+            img_process.show_img(debug_img)
         d_arc = img_process.detect_distance(ori_image)
         d_arc_filtered = self.filter.apply(d_arc)
         print(d_arc, d_arc_filtered)
