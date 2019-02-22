@@ -133,7 +133,7 @@ def detect_distance(img):
         cam_dist = 120
     finally:
         if cam_dist > 120:
-            return 120
+            return 2 * np.arcsin(120 / (2 * 103.)) * 103.
         else:
             return 2 * np.arcsin(cam_dist / (2 * 103.)) * 103.
 

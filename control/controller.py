@@ -16,7 +16,9 @@ class Controller(object):
         self._start_time = time()
         self.is_recording = False
         self.K_im_traj = np.load('./control/K_traj_IM_VI.npy')
-        self.K_coupled = np.load('./control/coupled_k/0221.npy')
+        # self.K_coupled = np.load('./control/coupled_k/0221.npy')
+        # self.K_coupled = np.load('./control/coupled_k/controllers-0221/controller_q11_01_q_22_01_q_33_05npy.npy')
+        self.K_coupled = np.load('./control/coupled_k/controllers-0221/controller_q11_01_q_22_01_q_33_005npy.npy')
         self.dis_sum = 0
         self.z = np.zeros((2))
         self.threshold = 500
@@ -64,8 +66,12 @@ class Controller(object):
             dis2car, = args
             pwm_l_new, pwm_r_new = policy.car_following(dis2car, K)
         elif policy_type == 5:
+            if self.is_recording and self.counter % 100 == 0:
+                np.save('./.out/record', self.record)
             d_arc, d_curve, theta = args
-            pwm_l_new, pwm_r_new = policy.adp_coupled_car_following(d_arc, d_curve, theta, self.z, self.K_coupled)
+            pwm_l_new, pwm_r_new = policy.adp_coupled_car_following(d_arc, d_curve, theta, self.z, self.K_coupled, self.record)
+            print(self.counter)
+            self.counter += 1
         else:
             pwm_l_new, pwm_r_new = 0, 0
             print('Policy Not Found')

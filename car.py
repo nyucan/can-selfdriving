@@ -19,6 +19,7 @@ from control.controller import Controller
 from control.processImage import processImage
 from util.detect import Detector
 from util import img_process
+from util.low_pass import LowPass
 from config import configs
 import client
 
@@ -32,6 +33,7 @@ class Car(object):
     def __init__(self):
         self.contorller = Controller()
         self.detector = Detector()
+        self.filter = LowPass(1)
         self.pre_img_id = -1
         self.cur_img_id = -1
 
@@ -102,59 +104,39 @@ class Car(object):
                 self.contorller.make_decision_with_policy(1, d2t, aot)
             self.pre_img_id = img_id
 
+    def offline_main(self, ori_image):
+        # ------------- preprocessing -------------
+        debug_img = img_process.crop_image(ori_image, 0.45, 0.85)
+        debug_img = img_process.down_sample(debug_img, (160, 48))
+        image = img_process.binarize(debug_img)
+        # -----------------------------------------
+        paras = self.detector.get_wrapped_all_parameters(image)
+        dc, dm, cur, ss = Car.unpackage_paras(paras)
+        dis_2_tan, pt = Detector.get_distance_2_tan(paras[6:9])
+        radian_at_tan = atan(paras[14])
+        # if configs['debug']: # display the fitting result in real time
+            # ------------- 1. display fitting result on the fly -------------
+            # debug_img = img_process.compute_debug_image(debug_img, IMG_W, IMG_H, NUM_OF_POINTS, pt, paras)
+            # img_process.show_img(debug_img)
+            # ----------------------------------------------------------------
+        d_arc = img_process.detect_distance(ori_image)
+        d_arc_filtered = self.filter.apply(d_arc)
+        print(d_arc, d_arc_filtered)
+        if d_arc_filtered >= 128:
+            self.contorller.make_decision_with_policy(1, dis_2_tan, radian_at_tan)
+        else:
+            self.contorller.make_decision_with_policy(5, d_arc_filtered, dis_2_tan, radian_at_tan)
+
     def run_offline(self, debug=True):
         stream = io.BytesIO()
-        first_start = True
+        self.contorller.start()
         waitting_for_ob = configs['avoid_collision']
         with picamera.PiCamera(resolution='VGA') as camera:
             with io.BytesIO() as stream:
                 for _ in camera.capture_continuous(stream, format='jpeg', use_video_port=True):
                     stream.seek(0)
                     ori_image = img_process.img_load_from_stream(stream)
-                    # ------------- preprocessing -------------
-                    debug_img = img_process.crop_image(ori_image, 0.45, 0.85)
-                    debug_img = img_process.down_sample(debug_img, (160, 48))
-                    image = img_process.binarize(debug_img)
-                    # -----------------------------------------
-                    # st = time.time()
-                    paras = self.detector.get_wrapped_all_parameters(image)
-                    dc, dm, cur, ss = Car.unpackage_paras(paras)
-                    dis_2_tan, pt = Detector.get_distance_2_tan(paras[6:9])
-                    radian_at_tan = atan(paras[14])
-                    # print('detect time.:', time.time() - st)
-                    if waitting_for_ob:
-                        ob = img_process.detect_obstacle(ori_image)
-                    # display the fitting result in real time
-                    if configs['debug']:
-                        # ------------- 1. display fitting result on the fly -------------
-                        debug_img = img_process.compute_debug_image(debug_img, IMG_W, IMG_H, NUM_OF_POINTS, pt, paras)
-                        img_process.show_img(debug_img)
-                        # ----------------------------------------------------------------
-                    if first_start:
-                        self.contorller.start()
-                        first_start = False
-                    # Control the car according to the parameters
-                    if waitting_for_ob and ob:
-                        ob = False
-                        print("attampting to avoid ...")
-                        # self.contorller.collision_avoid(time.time())
-                        waitting_for_ob = False
-                    else:
-                        # st = time.time()
-                        ## 1. ADP
-                        # self.contorller.make_decision_with_policy(1, dis_2_tan, radian_at_tan)
-                        ## 2. pure pursuit
-                        # l_d, sin_alpha = Detector.get_distance_angle_pp(paras[6:9])
-                        # self.contorller.make_decision_with_policy(2, l_d, sin_alpha)
-                        ## 3. Car following with ADP
-                        d_arc = img_process.detect_distance(ori_image)
-                        print(d_arc)
-                        # self.contorller.make_decision_with_policy(3, dis_2_tan, radian_at_tan, d_arc)
-                        # print('decision time: ', time.time() - st)
-                        ## 4. Car followings on stright lane
-                        # self.contorller.make_decision_with_policy(4, d_arc)
-                        ## 5. Coupled controller - Car following
-                        self.contorller.make_decision_with_policy(5, d_arc, dis_2_tan, radian_at_tan)
+                    self.offline_main(ori_image)
                     stream.seek(0)
                     stream.truncate()
 

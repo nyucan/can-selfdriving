@@ -7,7 +7,7 @@ def adp(distance_2_tan, radian_at_tan, distance_integral, K):
     state = np.array([distance_2_tan, radian_at_tan, distance_integral])
     differential_drive = np.clip(-np.matmul(K, state), -100.0, 100.0)
     print('ADP controller:', distance_2_tan, radian_at_tan)
-    pwm_mid = 35
+    pwm_mid = 60
     pwm_l_new = np.clip(pwm_mid - differential_drive / 2, 0, 100)
     pwm_r_new = np.clip(pwm_mid + differential_drive / 2, 0, 100)
     return pwm_l_new, pwm_r_new
@@ -66,16 +66,16 @@ def car_following(distance_2_car, K):
     # return pwm_l_new + 10, pwm_r_new  # cor car 1
 
 
-def adp_coupled_car_following(d_arc, d_curve, theta, z, K):
+def adp_coupled_car_following(d_arc, d_curve, theta, z, K, rec):
     """ A coupled controller.
     """
     state = np.array([d_arc, d_curve, theta])
-    z += np.array([d_arc - 100, d_curve])
+    z += np.array([d_arc - 90, d_curve])
     state_aug = np.concatenate((state, z))
     u = -K.dot(state_aug)
     u[1] = -u[1]
     pwm_mid = np.clip(u[0], 30, 60)
     pwm_l_new = np.clip(pwm_mid - u[1] / 2, 0, 100)
     pwm_r_new = np.clip(pwm_mid + u[1] / 2, 0, 100)
-    print(u, pwm_l_new, pwm_r_new)
+    record_item = np.concatenate((state, [pwm_mid, u[1]]))
     return pwm_l_new, pwm_r_new
