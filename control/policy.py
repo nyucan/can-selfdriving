@@ -64,3 +64,18 @@ def car_following(distance_2_car, K):
     print(distance_2_car, diff_distance, pwm_mid)
     # return pwm_l_new, pwm_r_new + 5   # for car 2
     # return pwm_l_new + 10, pwm_r_new  # cor car 1
+
+
+def adp_coupled_car_following(d_arc, d_curve, theta, z, K):
+    """ A coupled controller.
+    """
+    state = np.array([d_arc, d_curve, theta])
+    z += np.array([d_arc - 100, d_curve])
+    state_aug = np.concatenate((state, z))
+    u = -K.dot(state_aug)
+    u[1] = -u[1]
+    pwm_mid = np.clip(u[0], 30, 60)
+    pwm_l_new = np.clip(pwm_mid - u[1] / 2, 0, 100)
+    pwm_r_new = np.clip(pwm_mid + u[1] / 2, 0, 100)
+    print(u, pwm_l_new, pwm_r_new)
+    return pwm_l_new, pwm_r_new

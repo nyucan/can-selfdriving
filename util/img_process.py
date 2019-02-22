@@ -119,25 +119,23 @@ def img_load_from_stream(stream):
 def detect_distance(img):
     """ Detect obstacle based on red pixels on the original image.
     """
-    # cropped_img = crop_image(img, 0, 0.7)
     down_img = cv2.resize(img, dsize=None, fx=0.5, fy=0.5)
     red_img = red_filter(down_img)
-    cam_dist = 130 # max distance
+    cam_dist = 120 # max distance
     try:
         contours, hierarchy = cv2.findContours(red_img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         x, y, w, h = get_rectangle(contours)
-        cv2.rectangle(red_img, (x,y), (x+w,y+h), (255,0,0), 2) # for debug only
-        show_img(red_img, False, "Coutour", (340, 30))
-        show_img(down_img, False, "Down", (40, 30))
-        # cam_dist = 5400 // w   # distance in cm
+        # cv2.rectangle(red_img, (x,y), (x+w,y+h), (255,0,0), 2) # for debug only
+        # show_img(red_img, False, "Coutour", (340, 30))
+        # show_img(down_img, False, "Down", (40, 30))
         cam_dist = 2700 // w
     except ValueError:
-        cam_dist = 130
+        cam_dist = 120
     finally:
         if cam_dist > 120:
-            return 130
+            return 120
         else:
-            return cam_dist
+            return 2 * np.arcsin(cam_dist / (2 * 103.)) * 103.
 
 
 def img_save(img, path):
