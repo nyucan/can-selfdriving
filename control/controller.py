@@ -22,36 +22,32 @@ class Controller(object):
         self.K_im_traj = np.load('./control/K_traj_IM_VI.npy')
         # self.K_coupled = np.load('./control/coupled_k/0221.npy')
         self.testing_Ks = [
-            # 0
-            'controller_q11_100_q_22_10_q_33_05npy.npy',
-            'controller_q11_10_q_22_100_q_33_50npy.npy',
-            'controller_q11_100_q_22_01_q_33_05npy.npy', # best for now
-            'controller_q11_10_q_22_100_q_33_05npy.npy',
-            # 4
-            'controller_q11_10_q_22_10_q_33_005npy.npy',
-            'controller_q11_10_q_22_100_q_33_005npy.npy',
-            'controller_q11_100_q_22_01_q_33_005npy.npy', # bad
-            'controller_q11_100_q_22_10_q_33_50npy.npy',  # very bad
-            # 8
-            'controller_q11_100_q_22_100_q_33_05npy.npy', # very bad
-            'controller_q11_01_q_22_100_q_33_005npy.npy', # bad
-            'controller_q11_01_q_22_10_q_33_005npy.npy',  # very very bad
-            'controller_q11_10_q_22_10_q_33_05npy.npy',
-            # 12
-            'controller_q11_01_q_22_01_q_33_005npy.npy',
-            'controller_q11_01_q_22_100_q_33_05npy.npy',
-            'controller_q11_10_q_22_01_q_33_50npy.npy',
-            'controller_q11_100_q_22_100_q_33_50npy.npy',
-            'controller_q11_01_q_22_10_q_33_05npy.npy',
-            'controller_q11_01_q_22_10_q_33_50npy.npy',
-            'controller_q11_01_q_22_100_q_33_50npy.npy',
-            'controller_q11_01_q_22_01_q_33_05npy.npy',
-            'controller_q11_100_q_22_100_q_33_005npy.npy',
-            'controller_q11_10_q_22_01_q_33_05npy.npy',
-            'controller_q11_01_q_22_01_q_33_50npy.npy',
-            'controller_q11_10_q_22_01_q_33_005npy.npy',
-            'controller_q11_100_q_22_01_q_33_50npy.npy',
-            'controller_q11_100_q_22_10_q_33_005npy.npy',
+            'controller_q11_100_q_22_10_q_33_05npy.npy',  # 0
+            'controller_q11_10_q_22_100_q_33_50npy.npy',  # 1
+            'controller_q11_100_q_22_01_q_33_05npy.npy',  # 2 best for now
+            'controller_q11_10_q_22_100_q_33_05npy.npy',  # 3
+            'controller_q11_10_q_22_10_q_33_005npy.npy',  # 4
+            'controller_q11_10_q_22_100_q_33_005npy.npy', # 5
+            'controller_q11_100_q_22_01_q_33_005npy.npy', # 6 bad
+            'controller_q11_100_q_22_10_q_33_50npy.npy',  # 7 very bad
+            'controller_q11_100_q_22_100_q_33_05npy.npy', # 8 very bad
+            'controller_q11_01_q_22_100_q_33_005npy.npy', # 9 bad
+            'controller_q11_01_q_22_10_q_33_005npy.npy',  # 10 very very bad
+            'controller_q11_10_q_22_10_q_33_05npy.npy',   # 11
+            'controller_q11_01_q_22_01_q_33_005npy.npy',  # 12 good
+            'controller_q11_01_q_22_100_q_33_05npy.npy',  # 13
+            'controller_q11_10_q_22_01_q_33_50npy.npy',   # 14
+            'controller_q11_100_q_22_100_q_33_50npy.npy', # 15 good
+            'controller_q11_01_q_22_10_q_33_05npy.npy',   # 16
+            'controller_q11_01_q_22_10_q_33_50npy.npy',   # 17
+            'controller_q11_01_q_22_100_q_33_50npy.npy',  # 18
+            'controller_q11_01_q_22_01_q_33_05npy.npy',   # 19
+            'controller_q11_100_q_22_100_q_33_005npy.npy',  # 20
+            'controller_q11_10_q_22_01_q_33_05npy.npy',   # 21
+            'controller_q11_01_q_22_01_q_33_50npy.npy',   # 22
+            'controller_q11_10_q_22_01_q_33_005npy.npy',  # 23
+            'controller_q11_100_q_22_01_q_33_50npy.npy',  # 24
+            'controller_q11_100_q_22_10_q_33_005npy.npy', # 25
             'controller_q11_10_q_22_10_q_33_50npy.npy'
         ]
         self.K_coupled = np.load('./control/coupled_k/controllers-0221/' + self.testing_Ks[0])
