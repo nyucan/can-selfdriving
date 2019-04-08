@@ -16,10 +16,8 @@ import cv2
 # from PIL import Image
 
 from control.controller import Controller
-from control.processImage import processImage
 from util.detect import Detector
 from util import img_process
-from util.low_pass import LowPass
 from config import configs
 import client
 
@@ -33,9 +31,9 @@ class Car(object):
     def __init__(self):
         self.contorller = Controller()
         self.detector = Detector()
-        self.filter = LowPass(5)
         self.pre_img_id = -1
         self.cur_img_id = -1
+        self.has_switched = False
 
     @staticmethod
     def unpackage_paras(packaged_parameters):
@@ -118,12 +116,12 @@ class Car(object):
             debug_img = img_process.compute_debug_image(debug_img, IMG_W, IMG_H, NUM_OF_POINTS, pt, paras)
             img_process.show_img(debug_img)
         d_arc = img_process.detect_distance(ori_image)
-        d_arc_filtered = self.filter.apply(d_arc)
-        print(d_arc, d_arc_filtered)
-        if d_arc_filtered >= 128:
+        print(d_arc)
+        if d_arc >= 95 and (not self.has_switched):
             self.contorller.make_decision_with_policy(1, dis_2_tan, radian_at_tan)
         else:
-            self.contorller.make_decision_with_policy(5, d_arc_filtered, dis_2_tan, radian_at_tan)
+            self.has_switched = True
+            self.contorller.make_decision_with_policy(5, d_arc, dis_2_tan, radian_at_tan)
 
     def run_offline(self, debug=True):
         stream = io.BytesIO()
