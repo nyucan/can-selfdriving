@@ -1,10 +1,10 @@
 import numpy as np
-from control.filters import DistanceKalmanFilter
+# from control.filters import DistanceKalmanFilter
 
 class Policy(object):
     def __init__(self):
         self.last_pwd_mid = 60
-        self.filter = DistanceKalmanFilter()
+        # self.filter = DistanceKalmanFilter()
 
     @staticmethod
     def adp(distance_2_tan, radian_at_tan, distance_integral, K):
@@ -77,7 +77,7 @@ class Policy(object):
         """ A coupled controller.
         """
         d_arc_origin = d_arc
-        d_arc = self.filter.apply(d_arc, self.last_pwd_mid)
+        # d_arc = self.filter.apply(d_arc, self.last_pwd_mid)
         print('distance:', d_arc_origin, d_arc)
         state = np.array([d_arc, d_curve, theta])
         z += np.array([d_arc - 70, d_curve])
@@ -95,12 +95,28 @@ class Policy(object):
     def no_orientation_control(self, d_curve, theta, l_d):
         """Path following with no orientation control in Handbook of Robotics P805
         """
-        u_1 = 50
+        u_1 = 5
         l_1 = l_d 
-        K = 2
+        K = 0.5
         u_2 = -(u_1/l_1)*(np.sin(theta)/np.cos(theta)) - (u_1/np.cos(theta))*K*d_curve
         print('u_2:', u_2, 'd_curve:', d_curve, 'theta:', theta)
-        pwm_mid = 50.0
+        pwm_mid = 70.0
         pwm_l_new = np.clip(pwm_mid - u_2, 0, 100.0)
         pwm_r_new = np.clip(pwm_mid + u_2, 0, 100.0)
+        return  pwm_l_new, pwm_r_new
+
+    def no_orientation_control_follow(self, d_arc, d_curve, theta, l_d, rec):
+        """Path following with no orientation control in Handbook of Robotics P805
+        """
+        u_1 = 5
+        l_1 = l_d 
+        K = 0.5
+        u_2 = -(u_1/l_1)*(np.sin(theta)/np.cos(theta)) - (u_1/np.cos(theta))*K*d_curve
+        print('u_2:', u_2, 'd_curve:', d_curve, 'theta:', theta, 'd_arc', d_arc)
+        # pwm_mid = 50.0
+        pwm_mid = 50.0 + (d_arc-70)
+        pwm_l_new = np.clip(pwm_mid - u_2, 0, 100.0)
+        pwm_r_new = np.clip(pwm_mid + u_2, 0, 100.0)
+        record_item = np.transpose([d_curve, pwm_mid, u_2, d_arc])
+        rec.append(record_item)
         return  pwm_l_new, pwm_r_new

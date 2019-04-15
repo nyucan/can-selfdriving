@@ -104,6 +104,18 @@ class Controller(object):
             pwm_l_new, pwm_r_new = self.policy.adp_coupled_car_following(d_arc, d_curve, theta, self.z, self.K_coupled, self.record)
             print('counter: ', self.counter)
             self.counter += 1
+        elif policy_type ==6:
+             d_curve, theta = args
+             l_d = 50
+             pwm_l_new, pwm_r_new = self.policy.no_orientation_control( d_curve, theta, l_d)
+        elif policy_type ==7:
+            if self.is_recording and self.counter % 100 == 0:
+                np.save('./recdata', self.record)
+            d_arc, d_curve, theta = args
+            l_d = 50
+            pwm_l_new, pwm_r_new = self.policy.no_orientation_control_follow( d_arc, d_curve, theta, l_d, self.record)
+            print('counter: ', self.counter)
+            self.counter += 1
         else:
             pwm_l_new, pwm_r_new = 0, 0
             print('Policy Not Found')
